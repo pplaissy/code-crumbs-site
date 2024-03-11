@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <base href="../..">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Some code crumbs dropped along my coding <path/>">
+        <meta name="keywords" content="Eleventy, Web Components, JS, HTML, JavaScript, SVG">
+        <meta name="author" content="Pierre Plaissy">
+        <title>Code crumbs</title>
+        <link rel="icon" href="assets/img/favicon.ico">
+        <link rel="stylesheet" href="assets/css/main.css">
+        <link rel="stylesheet" href="assets/css/posts.css">
+    </head>
+    <body>
+        <nav class="header">
+  <div class="avatar">
+    <img src="assets/img/me.png" alt="me" class="profile-img mr">
+    <!-- <span class="copy" @html="'&copy; ' + currentYear() + ' P. Plaissy'"></span> -->
+  </div>
+  <div class="title">
+    <div class="main">
+      <a href="#" class="nav-item mr">code crumbs...</a>
+      <a href="https://www.linkedin.com/in/pierreplaissy/" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer" class="linkedin">
+    <img src="assets/img/linkedin.svg" alt="LinkedIn" width="24" height="24" class="mb-1">
+</a>
+
+    </div>
+    <div class="epigraph">
+      <span>Some code crumbs dropped along my coding &lt;path/&gt;</span>
+    </div>
+  </div>
+</nav>
+<link rel="stylesheet" href="assets/css/header.css">
+
+        <div class="main-container">
+            <h1>About this tiny static blog site</h1>
+<article><h1>Setting up this blog site</h1>
+<p>Quand vous envisagez de déployer un site sur github pages, la doc vous indique que github utilise par défaut Jekyll et à posteriori je me dis que j'aurais probablement dû en rester là.</p>
+<p>Mais après avoir lu tout et son contraire sur les générateurs de sites statiques existants j'ai fini par choisir eleventy. Je dois dire que c'est le commentaire de <a href="https://twitter.com/SaraSoueidan/status/1144696081403523072" target="_blank" rel="noopener noreferrer" class="xlk">Sara Soueidan</a> dont j'avais dévoré les contributions sur <a href="https://tympanus.net/codrops/author/sarasoueidan/" target="_blank" rel="noopener noreferrer" class="xlk">codrops</a> qui a emporté ma décision. Ensuite, quel language template choisir ? plouf plouf, webc semble prometteur, c'est parti !</p>
+<p>This blog site is then set up with <a href="https://www.11ty.dev" target="_blank" rel="noopener noreferrer" class="xlk">eleventy</a> and <a href="https://www.11ty.dev/docs/languages/webc/" target="_blank" rel="noopener noreferrer" class="xlk">webc</a>.</p>
+<p>Faites-moi savoir si les quelques indications qui suivent vous ont été utiles pour votre propre projet. La repo est <a href="https://github.com/pplaissy/code-crumbs" target="_blank" rel="noopener noreferrer" class="xlk">ici</a>.</p>
+<h2>Architecture</h2>
+<p>Je voulais quelque chose de vraiment élémentaire, un blog site réduit à sa plus simple expression. No About page, no contact form (you can reach me on LinkedIn if necessary), no inanity like 'I like to blog about the stuff I'm interested in'. Just a home page with the posts list linking to each post page.</p>
+<h2>Layout</h2>
+<p>Le header et le footer doivent évidemment se trouver sur chaque page. Pour ça il faut créer un fichier de mise en page et indiquer le nom du fichier dans le front matter. La syntaxe que vous trouverez partout est la suivante considérant que mon fichier de layout se nomme main.webc et se trouve dans le dossier layouts :</p>
+<p><code>layout: layouts/main.webc</code></p>
+<p>Mais il est aussi possible de simplifier la déclaration dans le front matter en <code>layout: main.webc</code> à condition de déclarer le layouts folder inside the config file :</p>
+<pre><code class="language-json">dir: {
+    ...
+	layouts: "_includes/layouts"
+}
+</code></pre>
+<h3>cascading</h3>
+<p>Il y a un second layout pour le rendu d'un article, post.webc. Il s'agit simplement d'un conteneur qui référence le layout principal et affiche le contenu du post.</p>
+<pre><code class="language-html">---
+layout: main.webc
+---
+
+&lt;div @html="content"&gt;&lt;/div&gt;
+</code></pre>
+<h2>Relative links</h2>
+<p>Une des difficultés auxquelles je me suis heurté est la déclaration des liens dans le layout principal (main.webc), dont le href est de la forme 'assets/sub-folder/resource-file'. Par exemple :</p>
+<p><code>&lt;link rel="stylesheet" href="assets/css/main.css" webc:keep/&gt;</code></p>
+<p>Lorsqu'on est sur la page principale, pas de problème, le fichier de ressource est bien trouvé. Mais lorsqu'on navigue vers un article dont la page est nestée dans l'arborescence du site, la ressource devient inaccessible.</p>
+<p><img src="assets/img/11ty/11ty-01.png" alt="site tree"></p>
+<p>J'ai fait plein d'essais dans tous les sens dont certains fonctionnaient en local mais pas une fois buildé sur github.</p>
+<p>J'ai fini par trouver une solution simple en ce qu'elle tient en une ligne dans l'entête qui ajoute conditionnellement un base ref lorsque l'on se trouve sur la page d'un article :</p>
+<p><code>&lt;base webc:if="this.page.url.includes('posts')" href="../.."&gt;</code></p>
+<h2>External links target</h2>
+<p>Pour les liens externes, ceux qui renvoient à des pages extérieures au site, il me semble préférable de les ouvrir par défaut dans un nouvel onglet du navigateur. Pour ça il suffit d'ajouter les attributs {target="_blank" rel="noopener noreferrer"} à la suite du lien mais évidemment on ne veut pas qu'ils apparaissent dans le rendu html.</p>
+<p>Une petite recherche m'a rapidement conduit à deux options :</p>
+<ul>
+<li><a href="https://www.npmjs.com/package/markdown-it-for-inline" target="_blank" rel="noopener noreferrer" class="xlk">markdown-it-for-inline</a> dont l'utilisation est décrite dans cet article de <a href="https://v2.franknoirot.co/posts/external-links-markdown-plugin/" target="_blank" rel="noopener noreferrer" class="xlk">Frank Noirot</a></li>
+<li><a href="https://www.npmjs.com/package/markdown-it-attrs" target="_blank" rel="noopener noreferrer" class="xlk">markdown-it-attrs</a> dont il est question sur ce <a href="https://github.com/11ty/eleventy/issues/2301" target="_blank" rel="noopener noreferrer" class="xlk">thread github</a></li>
+</ul>
+<p>J'ai opté pour la seconde qui m'a paru plus simple. Vous noterez que je n'ai pas repris le <code>.disable("code")</code> puisque ça fonctionne très bien sans.</p>
+<p><code>const md = new markdownIt(options).use(markdownItAttrs);</code></p>
+<p>Bon, il faut bien avouer que ça peut vite devenir pénible de recopier tous ces attributs à la suite de chaque lien externe. Rien que dans ce paragraphe il y est quatre fois. On se demande assez vite s'il ne serait pas possible de faire plus simple.</p>
+<p>Et oui, c'est possible ! En utilisant une classe {.xlk} (par exemple) à la place. Plus léger et plus lisible, non ?</p>
+<p>Ça oblige à customiser le markdown renderer pour qu'il ajoute les attributs lorsque la classe est présente, mais ça vaut la peine. Ces quelques lignes dans le .eleventy.js et voila !</p>
+<pre><code class="language-js">// set an instance of markdownIt
+const md = new markdownIt(options).use(markdownItAttrs);
+
+// declare a default link renderer
+const defaultLinkRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
+  return self.renderToken(tokens, idx, options);
+};
+
+// set custom render function
+md.renderer.rules.link_open = (tokens, idx, options, env, self) =&gt; {
+  const token = tokens[idx];
+  // get the class attribute
+  const classAttr = token.attrGet("class");
+  // if class attribute exists and contains the external link flag...
+  if (classAttr &amp;&amp; classAttr.split(' ').includes("xlk")) {
+    // ...add the custom attributes
+    tokens[idx].attrSet('target', '_blank');
+    tokens[idx].attrJoin("rel", "noopener noreferrer");
+  }
+
+  // Pass the token to the default renderer.
+  return defaultLinkRender(tokens, idx, options, env, self);
+};
+</code></pre>
+<h2>Dates</h2>
+<p>En ce qui concerne les dates, I needed two things :</p>
+<ul>
+<li>
+<p>display the post date on the home page post list items</p>
+<p><img src="assets/img/11ty/11ty-02.png" alt="post date"></p>
+</li>
+<li>
+<p>display the current year beside the copyright icon in the footer</p>
+<p><img src="assets/img/11ty/11ty-03.png" alt="copy year"></p>
+</li>
+</ul>
+<p>Pour ça j'utilise <a href="https://moment.github.io/luxon/#/" target="_blank" rel="noopener noreferrer" class="xlk">Luxon</a> et je déclare deux fonctions dans le fichier de config :</p>
+<pre><code class="language-js">eleventyConfig.addJavaScriptFunction("postDate", (dateObj) =&gt; {
+	return DateTime.fromJSDate(dateObj).toLocaleString(DateTime.DATE_SHORT);
+});
+
+eleventyConfig.addJavaScriptFunction("currentYear", () =&gt; {
+	return DateTime.now().year;
+});
+</code></pre>
+<p>Dans le composant footer.webc on a ainsi :</p>
+<pre><code>&lt;p class="mr" @html="'&amp;copy; ' + currentYear() + ' Pierre Plaissy'"&gt;&lt;/p&gt;
+</code></pre>
+<p>Et dans le composant de liste des articles :</p>
+<pre><code>&lt;span @html="postDate(post.data.date)"&gt;&lt;/span&gt;
+</code></pre>
+<h2>CI</h2>
+<p>Le CI m'a donné un peu de mal, les exemples trouvés étant un peu anciens ou adaptés à d'autres configurations. Et la syntaxe yaml m'a donné mal à la tête 🤒. Bref, si mon script peut vous inspirer, j'ai élagué autant que possible et, comme vous pouvez le constater, ça fonctionne parfaitement en l'état.</p>
+<p>Pendant la phase de mise au point vous aurez sûrement des erreurs. Pour savoir ce qui se passe, rendez-vous sur l'onglet Actions de la repo.</p>
+<p><img src="assets/img/11ty/11ty-04.png" alt="build.yml"></p>
+<h2>Scripting</h2>
+<p>Enfin, pour écrire mes articles j'utilise <a href="https://typora.io/" target="_blank" rel="noopener noreferrer" class="xlk">Typora</a>.</p>
+<p>Créer un nouvel article consiste simplement à ajouter un fichier .md dans le dossier posts du site et à y insérer la front matter :</p>
+<pre><code>layout: post.webc
+title: this eleventy/webc tiny static blog site
+tags: post
+description: "To setup this site I used eleventy and webc"
+date: 2024-03-06
+image: 
+    path: ../assets/img/11ty/posts/11ty.png
+    alt: 11ty logo
+</code></pre>
+<p>Ensuite Je peux mettre cote à cote Typora et mon site en localhost et saisir en voyant le résultat au fur et à mesure 😁.</p>
+<p>Sauf qu'il y a encore un soucis...</p>
+<h2>Local images paths</h2>
+<p>Lorsque j'insère une image dans Typora, son path va logiquement être "../assets/etc." et, si le résultat est correct en localhost, sur le site en ligne l'image n'est plus trouvée puisqu'on a ajouté un <base href="../.."> au layout principal. Pour contourner cette difficulté, j'ai modifié le markdown renderer des images dans le fichier de config:</p>
+<pre><code>md.renderer.rules.image = function (tokens, idx, options, env, self) 
+{
+    const token = tokens[idx];
+    let src = token.attrGet('src');
+
+    // truncate paths for local images 
+    token.attrSet('src', src.slice(3));
+    token.attrSet('alt', token.content);
+
+    return self.renderToken(tokens, idx, options)
+}
+</code></pre>
+<h2>Conclusion</h2>
+<p>Voilà, c'était ma modeste contribution à l'univers eleventy. Vous me direz ce que vous en pensez.</p>
+<p>On a un site statique vraiment simple et facile à maintenir avec peu de fichiers et peu de lignes dans chaque.</p>
+<p>Le seul bémol est cette histoire de résolution des paths au moyen du base ref et du custom image markdown renderer. Ça fait un peu bricolage et quelque chose me dit qu'il y a un truc que je n'ai pas compris. Si quelqu'un pouvait mettre le doigt dessus ce serait formidable.</p>
+</article>
+        </div>
+    
+</body>
+</html>

@@ -1,5 +1,0 @@
----
-layout: main.webc
----
-<h1 @html="title"></h1>
-<article @html="content"></article>
