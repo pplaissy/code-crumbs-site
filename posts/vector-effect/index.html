@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <base href="../..">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Some code crumbs dropped along my coding <path/>">
+        <meta name="keywords" content="Eleventy, Web Components, JS, HTML, JavaScript, SVG">
+        <meta name="author" content="Pierre Plaissy">
+        <title>Code crumbs</title>
+        <link rel="icon" href="assets/img/favicon.ico">
+        <link rel="stylesheet" href="assets/css/main.css">
+        <link rel="stylesheet" href="assets/css/posts.css">
+    </head>
+    <body>
+        <nav class="header">
+  <div class="avatar">
+    <img src="assets/img/me.png" alt="me" class="profile-img mr">
+    <!-- <span class="copy" @html="'&copy; ' + currentYear() + ' P. Plaissy'"></span> -->
+  </div>
+  <div class="title">
+    <div class="main">
+      <a href="#" class="nav-item mr">code crumbs...</a>
+      <a href="https://www.linkedin.com/in/pierreplaissy/" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer" class="linkedin">
+    <img src="assets/img/linkedin.svg" alt="LinkedIn" width="24" height="24" class="mb-1">
+</a>
+
+    </div>
+    <div class="epigraph">
+      <span>Some code crumbs dropped along my coding &lt;path/&gt;</span>
+    </div>
+  </div>
+</nav>
+<link rel="stylesheet" href="assets/css/header.css">
+
+        <div class="main-container">
+            <h1>A SVG vector-effect issue</h1>
+<article><h1>A SVG vector-effect issue</h1>
+<p>The other day I was working no a new version of my SVG graphics editor when I came across this confusing   <a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/vector-effect#non-scaling-stroke" target="_blank" rel="noopener noreferrer" class="xlk">vector-effect</a> behavior.</p>
+<p>As indicated in the documentation, the non-scaling-stroke value "has the resulting visual effect [...] that the stroke width is not dependent on the transformations of the element (including non-uniform scaling and shear transformations) and zoom level".</p>
+<p>This is perfect if you want to be able to zoom in on an image while maintaining a constant stroke width, which was my case.</p>
+<h2>zoom</h2>
+<p>There are two ways of zooming in on an SVG :</p>
+<ul>
+<li>Either by adding a matrix transform</li>
+<li>Or by modifying the viewBox</li>
+</ul>
+<p>I chose the second option and created this little function that modifies the viewBox to change the zoom factor, centred on the position of the pointer. For those interested, it looks like this :</p>
+<pre><code class="language-js">zoom(e: any): void {
+    const cvb = this.svgElement.viewBox.baseVal;
+    const mouseSvgPoint = this.getSvgPointFromClientPoint(this.svgElement, e.clientX, e.clientY);
+    const zoomFactor = e.deltaY &lt; 0 ? 1 / 1.2 : 1.2
+
+    // Update current zoom factor
+    this.currentZoomFactor /= zoomFactor;
+
+    // viewBox size after zoom
+    const targetWidth = cvb.width * zoomFactor;
+    const targetHeight = cvb.height * zoomFactor;
+    // zoom delta
+    const deltaX = cvb.width - targetWidth;
+    const deltaY = cvb.height - targetHeight;
+
+    // Pointer distance to origin
+    const mouseDistX = Math.sqrt(Math.pow(mouseSvgPoint.x - cvb.x, 2));
+    const mouseDistY = Math.sqrt(Math.pow(mouseSvgPoint.y - cvb.y, 2));
+    // Pointer distance to origin width ratio
+    const mouseDistXRatio = mouseDistX / cvb.width;
+    const mouseDistYRatio = mouseDistY / cvb.height;
+    // Apply changes
+    const vbx = cvb.x + deltaX * mouseDistXRatio;
+    const vby = cvb.y + deltaY * mouseDistYRatio;
+}
+</code></pre>
+<p>It works well. In the screenshot below, you can see how the viewBox attribute is updated by the zoom function triggered by the mouse wheel.</p>
+<p><img src="assets/img/vector-effect/svg-zoom.gif" alt="viewbox changing"></p>
+<h2>Scaling stroke</h2>
+<p>Contrary to what can be seen in the previous screenshot, by default the rendering of line thicknesses is not constant when the viewBox changes, this is the normal behaviour.</p>
+<p><img src="assets/img/vector-effect/scaling-stroke.gif" alt="scaling stroke"></p>
+<h2>Non scaling stroke</h2>
+<p>As I said at the beginning, you can avoid this visual scaling by using the vector-effect attribute. Below I’ve applied it to circles and lines but not to the path.</p>
+<pre><code class="language-html">&lt;circle
+    ...
+    stroke-width="1"
+    vector-effect="non-scaling-stroke"&gt;
+&lt;/circle&gt;
+
+</code></pre>
+<p><img src="assets/img/vector-effect/non-scaling-stroke.gif" alt="non scaling stroke"></p>
+<h2>Loosing pointer events</h2>
+<p>Now I’m adding a css :hover to the graphic items to display the event capture.</p>
+<pre><code class="language-css">.graphic-item:hover {
+    stroke-width: 4 !important;
+}
+</code></pre>
+<p><img src="assets/img/vector-effect/loosing-pointer-events.gif" alt="loosing pointer events"></p>
+<p>And that’s where things go wrong. Everything’s fine up to a certain zoom factor (which I haven’t managed to determine) where the circles lose the events. And the same is true for ellipses and path arcs. If I have a path with straight segments and a curved segment, the straight segment remains hooverable whereas the curved segment no longer reacts.</p>
+<h2>Conclusion</h2>
+<p>I haven’t found any reference to this on the net. If anyone has any clues, I’d love to hear from you.</p>
+<p>I’m currently using a binding method that gives a better visual result overall. With non-scaling-stroke, the line thickness is constant, so when you zoom out a lot and the drawing is “far away” it becomes unreadable because the line thickness completely crushes it. With stroke binding, the thickness of the lines can be calculated in proportion to the zoom factor, giving a very nice rendering at all scales.</p>
+<p><img src="assets/img/vector-effect/stroke-binding.gif" alt="stroke binding"></p>
+</article>
+        </div>
+    
+</body>
+</html>
