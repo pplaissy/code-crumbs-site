@@ -8,6 +8,13 @@
         <meta name="keywords" content="Eleventy, Web Components, JS, HTML, JavaScript, SVG">
         <meta name="generator" content="Eleventy">
         <meta name="author" content="Pierre Plaissy">
+
+        <meta property="og:title" content="How to code a drawing undo/redo feature">
+        <meta property="og:type" content="article">
+        <meta property="og:URL" content="https://code-crumbs.pplaissy/posts/undo-redo/">
+        <meta property="og:image" content="https://code-crumbs.pplaissy/assets/img/undo-redo/thumbnail.png">
+        <meta property="og:description" content="An undo/redo drawing feature from scratch, step by step and with a really cool and innovative bonus">
+
         <title>Code crumbs</title>
         <link rel="icon" href="assets/img/favicon.ico">
         <link rel="stylesheet" href="assets/css/main.css">
@@ -35,8 +42,94 @@
 <link rel="stylesheet" href="assets/css/header.css">
 
         <div class="main-container">
-            <h1>How to make a drawing undo/redo feature</h1>
-<article></article>
+            <h1>How to code a drawing undo/redo feature</h1>
+<article><p>The principle is well known so there's no need to describe it. Let's just remember that we're in the special environment of an SVG editor, and that undo/redo operations to the modifications of graphical entities, lines, circles, paths, etc.</p>
+<h2>Drawing action</h2>
+<p>If you want to undo a modification to a graphical entity, you must of course have stored the entity's state before the modification. And if you want to restore an undone modification, you must first have stored the entity's modified state.</p>
+<p>Let's set up a <strong>DrawingAction</strong> class designed to store the modification of an entity, i.e. both its "<strong>prevState</strong>" state before modification and its "<strong>nextState</strong>" state after modification. We also store "<strong>entity</strong>", a pointer to the entity itself, so we can change its state right here by applying "<strong>prevState</strong>" or "<strong>nextState</strong>" as appropriate.</p>
+<pre><code class="language-typescript">export class DrawingAction {
+    entity: any;
+    prevState: any;
+    nextState: any;
+    status: UndoStateEnum = UndoStateEnum.pending;
+}
+</code></pre>
+<p>To reverse a state, you need to know "<strong>status</strong>" of the current state. I use a "<strong>UndoStateEnum</strong>" enum that lets me know whether the modification is in progress, undone or restored:</p>
+<pre><code class="language-typescript">export enum UndoStateEnum {
+    pending = 0,
+    restored,
+    undone
+}
+</code></pre>
+<p>A <strong>DrawingAction</strong> is created when a modification action begins. A service, which we'll see a little later, receives the storage request and generates as many <strong>DrawingActions</strong> as there are selected entities to be modified.</p>
+<pre><code class="language-typescript">export class DrawingAction {
+	...
+    cudOp: UndoCUDOpEnum;
+    
+    constructor(e: any, cudOp: UndoCUDOpEnum) { 
+        this.entity = e;
+        this.cudOp = cudOp;
+        this.prevState = this.cloneState(e);
+    }
+}
+</code></pre>
+<p>Le constructeur reçoit l'entité qui est de type any (j'aurais pu lui donner le type de base de mes entités mais j'ai préféré rester générique à ce stade), et "<strong>cudOp</strong>" qui donne le type d'opération CUD (Create, Update, Delete) commencé sur les entités sélectionnées. On a besoin de cette information car ce n'est pas la même chose de rétablir la position d'une entité et de la réinsérée s'il elle a été supprimée ou de la supprimer si elle a été créée.</p>
+<p>"<strong>cudOp</strong>" est de type de l'énumération <strong>UndoCUDOpEnum</strong> :</p>
+<pre><code class="language-typescript">export enum UndoCUDOpEnum {
+    update = 0,
+    create,
+    delete
+}
+</code></pre>
+<p>Le constructeur initialise l'état courant "prevState" avec un clone de l'entité.</p>
+<pre><code class="language-typescript">private cloneState(e: any): any {
+    return JSON.parse(JSON.stringify(e));
+}
+</code></pre>
+<p>"<strong>prevState</strong>" peut sembler un nom assez inapproprié pour désigner l'état courant mais il faut anticiper le fait que lorsqu'on aura fait une opération undo, les deux états "<strong>prevState</strong>" et "<strong>nextState</strong>" auront été échangés et que "<strong>prevState</strong>" correspondra effectivement à l'état précédant l'opération undo.</p>
+<p>Pour résumer ce chapitre, voilà la classe <strong>DrawingAction</strong> en entier, elle est très simple :</p>
+<pre><code class="language-typescript">export class DrawingAction {
+    entity: any;
+    prevState: any;
+    nextState: any;
+    status: UndoStateEnum = UndoStateEnum.pending;
+    cudOp: UndoCUDOpEnum;
+    
+    constructor(e: any, cudOp: UndoCUDOpEnum) { 
+        this.entity = e;
+        this.cudOp = cudOp;
+        this.prevState = this.cloneState(e);
+    }
+
+    push(e: any): boolean {
+        this.nextState = this.cloneState(e);
+        this.status = UndoStateEnum.restored;
+        // return false if the entity has no changes
+        return JSON.stringify(this.entity) !== this.nextState;
+    }
+
+    undo(): void {
+        this.switchState(UndoStateEnum.undone);
+    }
+
+    redo(): void {
+        this.switchState(UndoStateEnum.restored);
+    }
+
+    private switchState(status: UndoStateEnum): void {
+        const tmp = this.prevState;
+        Object.assign(this.entity, this.prevState);
+        this.prevState = this.nextState;
+        this.nextState = tmp;
+        this.status = status;
+    }
+
+    private cloneState(e: any): any {
+        return JSON.parse(JSON.stringify(e));
+    }
+}
+</code></pre>
+</article>
         </div>
     
 </body>
