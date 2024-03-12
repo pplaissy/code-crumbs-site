@@ -130,8 +130,55 @@ eleventyConfig.addJavaScriptFunction("currentYear", () =&gt; {
 <p>Et dans le composant de liste des articles :</p>
 <pre><code>&lt;span @html="postDate(post.data.date)"&gt;&lt;/span&gt;
 </code></pre>
+<h2>Posts collection</h2>
+<p>In the middle of writing a new article it may happen that you have to make a update to the site (design, typo on another article, etc.). But if you make a commit, the draft of your unfinished article will also be published. To avoid this, simply tag the articles in the front matter as "published" or "draft" and declare the collection in the config file.</p>
+<pre><code class="language-js">eleventyConfig.addCollection("posts", function(collectionApi) {
+	return collectionApi.getFilteredByTag("published").sort(function(a, b) {
+  		return b.date - a.date; // sort by date - descending
+	});
+});
+</code></pre>
 <h2>CI</h2>
-<p>Le CI m'a donné un peu de mal, les exemples trouvés étant un peu anciens ou adaptés à d'autres configurations. Et la syntaxe yaml m'a donné mal à la tête 🤒. Bref, si mon script peut vous inspirer, j'ai élagué autant que possible et, comme vous pouvez le constater, ça fonctionne parfaitement en l'état.</p>
+<p>Le CI m'a donné un peu de mal, les exemples trouvés étant un peu anciens ou adaptés à d'autres configurations. Et la syntaxe yaml m'a donné mal à la tête 🤒. It's a little more tricky but I choose the two repos configuration. A private one to store the source (which contains the drafts) and a public one for the deployment of the site. A commit on the private repo triggers the build and a commit of the target folder content on the private repo which itself triggers the deployment.</p>
+<pre><code class="language-xml">name: build 11ty site
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - name: Install dependencies &amp; build
+        run: |
+          npm install
+          npx @11ty/eleventy
+      - uses: actions/upload-pages-artifact@v3
+
+      # Deploy the Static Site to Public Repo (GitHub Pages)
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4.3.3
+        with:
+          token:  $
+          repository-name: pplaissy/code-crumbs-site
+          branch: main # The branch the action should deploy to.
+          folder: _site # The folder the action should deploy.
+          single-commit: true
+          commit-message: "Deploy by source"
+</code></pre>
 <p>Pendant la phase de mise au point vous aurez sûrement des erreurs. Pour savoir ce qui se passe, rendez-vous sur l'onglet Actions de la repo.</p>
 <p><img src="assets/img/11ty/11ty-04.png" alt="build.yml"></p>
 <h2>Scripting</h2>
