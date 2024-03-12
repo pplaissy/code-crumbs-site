@@ -29,17 +29,22 @@ a{
 }
 
 pre:has(code), p code {
-    background-color: #ebebeb;
-    padding: 0 0.5rem;
+    background-color: #f5f3f1;
+}
+
+p code {
+    padding: 0.3rem;
 }
 
 pre:has(code) {
-    margin: 0 0.5rem;
+    padding: 0.5rem;
+    /* margin: 0 0.5rem; */
 }
 
 code {
     text-wrap: wrap;
-    font-family: droid-serif;
+    font-size: .7rem;
+    font-family: "Lucida Console",Consolas,"Courier", monospace;
 }
 
 p img {
