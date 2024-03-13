@@ -47,120 +47,112 @@
 <h2>Drawing action</h2>
 <p>If you want to undo a modification to a graphical entity, you must of course have stored the entity's state before the modification. And if you want to restore an undone modification, you must first have stored the entity's modified state.</p>
 <p>Let's set up a <strong>DrawingAction</strong> class designed to store the modification of an entity, i.e. both its "<strong>prevState</strong>" state before modification and its "<strong>nextState</strong>" state after modification. We also store "<strong>entity</strong>", a pointer to the entity itself, so we can change its state right here by applying "<strong>prevState</strong>" or "<strong>nextState</strong>" as appropriate.</p>
-<pre><code class="language-typescript">export class DrawingAction {
-    entity: any;
-    prevState: any;
-    nextState: any;
-    status: UndoStateEnum = UndoStateEnum.pending;
-}
-</code></pre>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">DrawingAction</span> <span class="token punctuation">{</span>
+    entity<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">;</span>
+    prevState<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">;</span>
+    nextState<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">;</span>
+    status<span class="token operator">:</span> UndoStateEnum <span class="token operator">=</span> UndoStateEnum<span class="token punctuation">.</span>pending<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
 <p>To reverse a state, you need to know "<strong>status</strong>" of the current state. I use a "<strong>UndoStateEnum</strong>" enum that lets me know whether the modification is in progress, undone or restored:</p>
-<pre><code class="language-typescript">export enum UndoStateEnum {
-    pending = 0,
-    restored,
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">enum</span> UndoStateEnum <span class="token punctuation">{</span>
+    pending <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span>
+    restored<span class="token punctuation">,</span>
     undone
-}
-</code></pre>
+<span class="token punctuation">}</span></code></pre>
 <h3>Starting an update</h3>
 <p>A <strong>DrawingAction</strong> is created when a modification action begins. A [service](#undo service), which we'll see a little later, receives the storage request and generates as many <strong>DrawingActions</strong> as there are selected entities to be modified.</p>
-<pre><code class="language-typescript">export class DrawingAction {
-	...
-    cudOp: UndoCUDOpEnum;
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">DrawingAction</span> <span class="token punctuation">{</span>
+	<span class="token operator">...</span>
+    cudOp<span class="token operator">:</span> UndoCUDOpEnum<span class="token punctuation">;</span>
     
-    constructor(e: any, cudOp: UndoCUDOpEnum) { 
-        this.entity = e;
-        this.cudOp = cudOp;
-        this.prevState = this.cloneState(e);
-    }
-}
-</code></pre>
-<p>Le constructeur reçoit l'entité qui est de type any. J'aurais pu lui donner le type de base de mes entités mais j'ai préféré rester générique à ce stade, cette pouvant servir dans différents contextes. Le "<strong>cudOp</strong>" indique le type d'opération CUD (Create, Update, Delete) commencé sur les entités sélectionnées. On a besoin de cette information car ce n'est pas la même chose de rétablir la position d'une entité que de la réinsérer s'il elle a été supprimée ou de la supprimer si elle a été créée.</p>
-<p>Là aussi j'utilise une énumération :</p>
-<pre><code class="language-typescript">export enum UndoCUDOpEnum {
-    update = 0,
-    create,
-    delete
-}
-</code></pre>
-<p>Le constructeur de <strong>DrawingAction</strong> initialise l'état courant "<strong>prevState</strong>" avec un clone de l'entité.</p>
-<pre><code class="language-typescript">private cloneState(e: any): any {
-    return JSON.parse(JSON.stringify(e));
-}
-</code></pre>
-<p>"<strong>prevState</strong>" peut sembler un nom assez inapproprié pour désigner l'état courant mais il faut bien voir que lorsqu'on aura fait une opération undo, les deux états "<strong>prevState</strong>" et "<strong>nextState</strong>" auront été échangés et que "<strong>prevState</strong>" correspondra effectivement à l'état précédant l'opération undo.</p>
+    <span class="token function">constructor</span><span class="token punctuation">(</span>e<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">,</span> cudOp<span class="token operator">:</span> UndoCUDOpEnum<span class="token punctuation">)</span> <span class="token punctuation">{</span> 
+        <span class="token keyword">this</span><span class="token punctuation">.</span>entity <span class="token operator">=</span> e<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>cudOp <span class="token operator">=</span> cudOp<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>prevState <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">cloneState</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>The ctor receives the entity, which is of type any. I could have given it the base type of my entities but I preferred to keep it generic at this stage, as this can be used in different contexts. The "<strong>cudOp</strong>" indicates the type of CUD (Create, Update, Delete) operation started on the selected entities. We need this information because it's not the same thing to restore the position of an entity as to reinsert it if it has been deleted or to delete it if it has been created.</p>
+<p>Here too I use an enumeration :</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">enum</span> UndoCUDOpEnum <span class="token punctuation">{</span>
+    update <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span>
+    create<span class="token punctuation">,</span>
+    <span class="token keyword">delete</span>
+<span class="token punctuation">}</span></code></pre>
+<p>The <strong>DrawingAction</strong> ctor initializes the current state "<strong>prevState</strong>" with a clone of the entity.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">private</span> <span class="token function">cloneState</span><span class="token punctuation">(</span>e<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">any</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>"<strong>prevState</strong>" may seem a rather inappropriate name for the current state, but it must be remembered that when an undo operation is performed, the two states "<strong>prevState</strong>" and "<strong>nextState</strong>" will have been exchanged and "<strong>prevState</strong>" will effectively correspond to the state preceding the undo operation.</p>
 <h3>Ending an update</h3>
-<p>Lorsqu'une opération de modification est terminée, le [service](#undo service) valorise le nouvel état des entités concernées pour chaque <strong>DrawingAction</strong> :</p>
-<pre><code class="language-typescript">push(e: any): boolean {
-    this.nextState = this.cloneState(e);
-    this.status = UndoStateEnum.restored;
-    // return false if the entity has no changes
-    return prevState !== this.nextState;
-}
-</code></pre>
-<p>On clone l'état de l'entité modifiée comme on l'avait fait pour <strong>prevState</strong> dans le constructeur. <strong>status</strong> qui était <strong>UndoStateEnum.pending</strong> dans le constructeur devient <strong>UndoStateEnum.restored</strong>. Restored parce qu'il n'y a pas de différence entre un état courant après modification et rétabli après un redo. C'est la même ambiguïté de nom qu'on a vu plus haut avec <strong>prevState</strong>.</p>
-<p>Pourquoi est-il nécessaire de passer <code>(e: any)</code> à la fonction push puisqu'on a déjà stocké <strong>entity</strong> à l'initialisation. Il s'agit d'un pointeur donc son état <strong>est</strong> l'état modifié. On pourrait très bien faire <code>this.nextState = this.cloneState(this.entity);</code> non? Et bien non car dans le cas d'une opération d'insertion l'entité n'existe pas encore au moment de l'initialisation de <strong>DrawingAction</strong>. <strong>entity</strong> et <strong>prevState</strong> sont undefined. Et ici à l'inverse c'est lors d'une opération de suppression que <strong>e</strong> et <strong>nextState</strong> sont undefined puisqu'à ce moment l'entité n'existe plus.</p>
-<p>Cette fonction retourne false si les deux états sont identiques. Cela indique que l'entité n'a pas été modifiée, ce qui se produit si l'opération de modification a été annulée par l'utilisateur avant d'être terminée. Ce retour permet au [service](undo service) de savoir s'il doit conserver la <strong>DrawingAction</strong> ou non.</p>
+<p>When a modification operation is complete, the [service](#undo service) set the new state of the entities for each <strong>DrawingAction</strong> :</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token function">push</span><span class="token punctuation">(</span>e<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">boolean</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>nextState <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">cloneState</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>status <span class="token operator">=</span> UndoStateEnum<span class="token punctuation">.</span>restored<span class="token punctuation">;</span>
+    <span class="token comment">// return false if the entity has no changes</span>
+    <span class="token keyword">return</span> prevState <span class="token operator">!==</span> <span class="token keyword">this</span><span class="token punctuation">.</span>nextState<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>We clone the state of the modified entity as we did for <strong>prevState</strong> in the constructor. For example, <strong>status</strong>, which was <strong>UndoStateEnum.pending</strong> in the constructor, becomes <strong>UndoStateEnum.restored</strong>. Restored because there is no difference between a current state after a modification and a restored state after a redo. This is the same name ambiguity we saw above with <strong>prevState</strong>..</p>
+<p>Why is it necessary to pass <code>(e: any)</code> to the <strong>push</strong> function since entity has already been stored at initialisation. Remember it's a pointer, so its state is the modified state. We could just as easily do <code>this.nextState = this.cloneState(this.entity);</code> couldn't we? Well, no, because in the case of an insertion operation, the entity doesn't yet exist when <strong>DrawingAction</strong> is initialised. <strong>entity</strong> and <strong>prevState</strong> are undefined. And here, conversely, it's during a delete operation that <strong>e</strong> and <strong>nextState</strong> are undefined, because at that point the entity no longer exists..</p>
+<p>This function returns false if the two states are identical. This indicates that the entity has not been modified, which occurs if the modification operation has been cancelled by the user before being completed. This return value allows the [service](#undo service) to know whether it should keep the <strong>DrawingAction</strong> or not.</p>
 <h3>Undoing / redoing</h3>
-<p>Enfin il reste à écrire les deux méthodes undo et redo, ce qui est élémentaire puisqu'il s'agit juste d'intervertir les deux états et de changer le statut.</p>
-<pre><code>undo(): void {
-    this.switchState(UndoStateEnum.undone);
-}
+<p>Finally, we still have to write the two methods undo and redo, which is quite straightforward, as all we have to do is swap the two states and change the status.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token function">undo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">switchState</span><span class="token punctuation">(</span>UndoStateEnum<span class="token punctuation">.</span>undone<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
 
-redo(): void {
-    this.switchState(UndoStateEnum.restored);
-}
+<span class="token function">redo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">switchState</span><span class="token punctuation">(</span>UndoStateEnum<span class="token punctuation">.</span>restored<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
 
-private switchState(status: UndoStateEnum): void {
-    const tmp = this.prevState;
-    Object.assign(this.entity, this.prevState);
-    this.prevState = this.nextState;
-    this.nextState = tmp;
-    this.status = status;
-}
-</code></pre>
+<span class="token keyword">private</span> <span class="token function">switchState</span><span class="token punctuation">(</span>status<span class="token operator">:</span> UndoStateEnum<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> tmp <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>prevState<span class="token punctuation">;</span>
+    Object<span class="token punctuation">.</span><span class="token function">assign</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>entity<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>prevState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>prevState <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>nextState<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>nextState <span class="token operator">=</span> tmp<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>status <span class="token operator">=</span> status<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
 <h3>In a nutshell</h3>
-<p>Pour résumer ce chapitre, voilà la classe <strong>DrawingAction</strong> en entier. This little piece of code is able to store and manage undo and redo ops.</p>
-<pre><code class="language-typescript">export class DrawingAction {
-    entity: any;
-    prevState: any;
-    nextState: any;
-    status: UndoStateEnum = UndoStateEnum.pending;
-    cudOp: UndoCUDOpEnum;
+<p>To sum up this chapter, here's the entire <strong>DrawingAction</strong> class. This little piece of code is able to store and manage undo and redo ops.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">DrawingAction</span> <span class="token punctuation">{</span>
+    entity<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">;</span>
+    prevState<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">;</span>
+    nextState<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">;</span>
+    status<span class="token operator">:</span> UndoStateEnum <span class="token operator">=</span> UndoStateEnum<span class="token punctuation">.</span>pending<span class="token punctuation">;</span>
+    cudOp<span class="token operator">:</span> UndoCUDOpEnum<span class="token punctuation">;</span>
     
-    constructor(e: any, cudOp: UndoCUDOpEnum) { 
-        this.entity = e;
-        this.cudOp = cudOp;
-        this.prevState = this.cloneState(e);
-    }
+    <span class="token function">constructor</span><span class="token punctuation">(</span>e<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">,</span> cudOp<span class="token operator">:</span> UndoCUDOpEnum<span class="token punctuation">)</span> <span class="token punctuation">{</span> 
+        <span class="token keyword">this</span><span class="token punctuation">.</span>entity <span class="token operator">=</span> e<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>cudOp <span class="token operator">=</span> cudOp<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>prevState <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">cloneState</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
 
-    push(e: any): boolean {
-        this.nextState = this.cloneState(e);
-        this.status = UndoStateEnum.restored;
-        // return false if the entity has no changes
-        return JSON.stringify(this.entity) !== this.nextState;
-    }
+    <span class="token function">push</span><span class="token punctuation">(</span>e<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">boolean</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>nextState <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">cloneState</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>status <span class="token operator">=</span> UndoStateEnum<span class="token punctuation">.</span>restored<span class="token punctuation">;</span>
+        <span class="token comment">// return false if the entity has no changes</span>
+        <span class="token keyword">return</span> <span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>entity<span class="token punctuation">)</span> <span class="token operator">!==</span> <span class="token keyword">this</span><span class="token punctuation">.</span>nextState<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
 
-    undo(): void {
-        this.switchState(UndoStateEnum.undone);
-    }
+    <span class="token function">undo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">switchState</span><span class="token punctuation">(</span>UndoStateEnum<span class="token punctuation">.</span>undone<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
 
-    redo(): void {
-        this.switchState(UndoStateEnum.restored);
-    }
+    <span class="token function">redo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">switchState</span><span class="token punctuation">(</span>UndoStateEnum<span class="token punctuation">.</span>restored<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
 
-    private switchState(status: UndoStateEnum): void {
-        const tmp = this.prevState;
-        Object.assign(this.entity, this.prevState);
-        this.prevState = this.nextState;
-        this.nextState = tmp;
-        this.status = status;
-    }
+    <span class="token keyword">private</span> <span class="token function">switchState</span><span class="token punctuation">(</span>status<span class="token operator">:</span> UndoStateEnum<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> tmp <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>prevState<span class="token punctuation">;</span>
+        Object<span class="token punctuation">.</span><span class="token function">assign</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>entity<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>prevState<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>prevState <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>nextState<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>nextState <span class="token operator">=</span> tmp<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>status <span class="token operator">=</span> status<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
 
-    private cloneState(e: any): any {
-        return JSON.parse(JSON.stringify(e));
-    }
-}
-</code></pre>
+    <span class="token keyword">private</span> <span class="token function">cloneState</span><span class="token punctuation">(</span>e<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">any</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
 <h2>Undo service</h2>
 <p>Passons maintenant au service qui reçoit les notifications de changement et stocke les états successifs des entités modifiées.</p>
 </article>

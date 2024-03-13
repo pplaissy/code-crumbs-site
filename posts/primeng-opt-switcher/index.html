@@ -56,77 +56,69 @@
 <p>Let's look into starting with the data model.</p>
 <h2>Options</h2>
 <p>The option button underlying model is a primeng.api.selectitem :</p>
-<pre><code class="language-js">export interface SelectItem&lt;T = any&gt; {
-    label?: string;
-    value: T;
-    styleClass?: string;
-    icon?: string;
-    title?: string;
-    disabled?: boolean;
-}
-</code></pre>
+<pre class="language-js"><code class="language-js"><span class="token keyword">export</span> <span class="token keyword">interface</span> <span class="token class-name">SelectItem</span><span class="token operator">&lt;</span><span class="token constant">T</span> <span class="token operator">=</span> any<span class="token operator">&gt;</span> <span class="token punctuation">{</span>
+    label<span class="token operator">?</span><span class="token operator">:</span> string<span class="token punctuation">;</span>
+    <span class="token literal-property property">value</span><span class="token operator">:</span> <span class="token constant">T</span><span class="token punctuation">;</span>
+    styleClass<span class="token operator">?</span><span class="token operator">:</span> string<span class="token punctuation">;</span>
+    icon<span class="token operator">?</span><span class="token operator">:</span> string<span class="token punctuation">;</span>
+    title<span class="token operator">?</span><span class="token operator">:</span> string<span class="token punctuation">;</span>
+    disabled<span class="token operator">?</span><span class="token operator">:</span> boolean<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
 <p>The only mandatory property is value. I also use label for tooltips and icon for as the name suggests.</p>
 <p>In this POC I can simply initialize the options array in the model ctor, but it is obviously possible to put all of this in a dedicated service :</p>
-<pre><code>this.options.push({label: "Extrémité", value: SvgEntityPointStyleEnum.end, icon: "grip_end"});
-... and so on
-... and finally the switcher
-this.options.push({label: "Tout", value: SvgEntityPointStyleEnum.none, icon: "select_all"});
-</code></pre>
+<pre class="language-js"><code class="language-js"><span class="token keyword">this</span><span class="token punctuation">.</span>options<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">label</span><span class="token operator">:</span> <span class="token string">"Extrémité"</span><span class="token punctuation">,</span> <span class="token literal-property property">value</span><span class="token operator">:</span> SvgEntityPointStyleEnum<span class="token punctuation">.</span>end<span class="token punctuation">,</span> <span class="token literal-property property">icon</span><span class="token operator">:</span> <span class="token string">"grip_end"</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token operator">...</span> and so on
+<span class="token operator">...</span> and finally the switcher
+<span class="token keyword">this</span><span class="token punctuation">.</span>options<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token literal-property property">label</span><span class="token operator">:</span> <span class="token string">"Tout"</span><span class="token punctuation">,</span> <span class="token literal-property property">value</span><span class="token operator">:</span> SvgEntityPointStyleEnum<span class="token punctuation">.</span>none<span class="token punctuation">,</span> <span class="token literal-property property">icon</span><span class="token operator">:</span> <span class="token string">"select_all"</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
 <p>I use an enum as id/value for each option. The switcher id is 0.</p>
-<pre><code class="language-js">export enum SvgEntityPointStyleEnum {
-    none = 0,
-    end,
-    middle,
-    center,
-	...
-}
-</code></pre>
+<pre class="language-js"><code class="language-js"><span class="token keyword">export</span> <span class="token keyword">enum</span> SvgEntityPointStyleEnum <span class="token punctuation">{</span>
+    none <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span>
+    end<span class="token punctuation">,</span>
+    middle<span class="token punctuation">,</span>
+    center<span class="token punctuation">,</span>
+	<span class="token operator">...</span>
+<span class="token punctuation">}</span></code></pre>
 <p>In my model, I therefore have two variables:</p>
-<pre><code class="language-js">options: SelectItem[] = [];
-selectedOptions: number[] = [];
-</code></pre>
+<pre class="language-js"><code class="language-js"><span class="token literal-property property">options</span><span class="token operator">:</span> SelectItem<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token literal-property property">selectedOptions</span><span class="token operator">:</span> number<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span></code></pre>
 <h2>Display</h2>
 <p>To customize the appearance of the switcher I add a conditional class 'switch-button' when the value of the option is SvgEntityPointStyleEnum.none (=== 0) in the component template.</p>
-<pre><code class="language-html">&lt;p-selectButton 
-    [options]="model.options" 
-    [multiple]="true" 
-    [(ngModel)]="model.selectedOptions" 
-    (onOptionClick)="model.onGripOptionClick($event)"&gt;
-    &lt;ng-template let-item pTemplate&gt;
-        &lt;img class="icon" 
-            [class.switch-button]="item.value === 0" 
-            alt="dropdown icon" [src]="'/assets/icons/' + item.icon + '.svg'" 
-            [pTooltip]="item.label" 
-            tooltipPosition="bottom"&gt;
-    &lt;/ng-template&gt;
-&lt;/p-selectButton&gt;
-
-</code></pre>
+<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p-selectButton</span> 
+    <span class="token attr-name">[options]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>model.options<span class="token punctuation">"</span></span> 
+    <span class="token attr-name">[multiple]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>true<span class="token punctuation">"</span></span> 
+    <span class="token attr-name">[(ngModel)]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>model.selectedOptions<span class="token punctuation">"</span></span> 
+    <span class="token attr-name">(onOptionClick)</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>model.onGripOptionClick($event)<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>ng-template</span> <span class="token attr-name">let-item</span> <span class="token attr-name">pTemplate</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>img</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>icon<span class="token punctuation">"</span></span> 
+            <span class="token attr-name">[class.switch-button]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>item.value === 0<span class="token punctuation">"</span></span> 
+            <span class="token attr-name">alt</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>dropdown icon<span class="token punctuation">"</span></span> <span class="token attr-name">[src]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span><span class="token punctuation">'</span>/assets/icons/' + item.icon + '.svg'<span class="token punctuation">"</span></span> 
+            <span class="token attr-name">[pTooltip]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>item.label<span class="token punctuation">"</span></span> 
+            <span class="token attr-name">tooltipPosition</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>bottom<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>ng-template</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p-selectButton</span><span class="token punctuation">&gt;</span></span></code></pre>
 <p>Selected view items are 2ways bound to the model's selectedOptions variable via [(ngModel)]. When I click a button, the selectedOptions array values are automatically updated. And update the array by code triggers the view update in return.</p>
 <p>the switch button background color is styled by css :</p>
-<pre><code class="language-css">:host ::ng-deep .p-selectbutton .p-button:has(&gt; .switch-button) {
-    background-color: rgb(233, 232, 232);
-}
-</code></pre>
+<pre class="language-css"><code class="language-css"><span class="token selector">:host ::ng-deep .p-selectbutton .p-button:has(&gt; .switch-button)</span> <span class="token punctuation">{</span>
+    <span class="token property">background-color</span><span class="token punctuation">:</span> <span class="token function">rgb</span><span class="token punctuation">(</span>233<span class="token punctuation">,</span> 232<span class="token punctuation">,</span> 232<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
 <h2>Behavior</h2>
 <p>All that remains is to prevent the switch button from displaying a toggle state. We can do this by modifying its style when it takes the "selected" state (primeng set the p-highlight class) in css, but I preferred to do it in js via the <code>(onOptionClick)="model .onGripOptionClick($event)"</code>. This allows you to never have it id in the selectedItems array.</p>
 <p>I use the <code>onGripOptionClick</code> method to intercept the switch button click event.</p>
-<pre><code>onGripOptionClick(e: SelectButtonOptionClickEvent): void {
-    if (e.option.value === SvgEntityPointStyleEnum.none) {
-        // user has clicked on the switch button
-        // the switch id juste became added to the model selectedOptions number array
-        // so if selectedOptions contains a single value it is necessarily 0
-        // that means there is no grip currently selected
-        if (this.selectedOptions.length === 1) {
-        	// there is no grip currently selected, we select all of them
-            this.selectedOptions = [...this.options.filter(x=&gt; x.value !== SvgEntityPointStyleEnum.none).map(x=&gt; x.value)];
-        } else {
-        	// in all other cases we deselect all
-            this.selectedOptions.splice(0);
-        }
-    }
-}
-</code></pre>
+<pre class="language-typescript"><code class="language-typescript"><span class="token function">onGripOptionClick</span><span class="token punctuation">(</span>e<span class="token operator">:</span> SelectButtonOptionClickEvent<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span>option<span class="token punctuation">.</span>value <span class="token operator">===</span> SvgEntityPointStyleEnum<span class="token punctuation">.</span>none<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// user has clicked on the switch button</span>
+        <span class="token comment">// the switch id juste became added to the model selectedOptions number array</span>
+        <span class="token comment">// so if selectedOptions contains a single value it is necessarily 0</span>
+        <span class="token comment">// that means there is no grip currently selected</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>selectedOptions<span class="token punctuation">.</span>length <span class="token operator">===</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        	<span class="token comment">// there is no grip currently selected, we select all of them</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>selectedOptions <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token operator">...</span><span class="token keyword">this</span><span class="token punctuation">.</span>options<span class="token punctuation">.</span><span class="token function">filter</span><span class="token punctuation">(</span>x<span class="token operator">=&gt;</span> x<span class="token punctuation">.</span>value <span class="token operator">!==</span> SvgEntityPointStyleEnum<span class="token punctuation">.</span>none<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span>x<span class="token operator">=&gt;</span> x<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        	<span class="token comment">// in all other cases we deselect all</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>selectedOptions<span class="token punctuation">.</span><span class="token function">splice</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
 <p>that's it that's all !</p>
 <p>Too light to consider a npm repo. If you want something like that, rather make your own classes perfectly adapted to your needs.</p>
 <h2>To go a little further</h2>

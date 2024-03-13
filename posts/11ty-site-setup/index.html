@@ -54,19 +54,17 @@
 <p>The header must obviously be on each page. To do this, you must create a layout file and indicate the name of the file in the front matter. The syntax that you will find everywhere is the following considering that my layout file is called main.webc and is located in the layouts folder:</p>
 <p><code>layout: layouts/main.webc</code></p>
 <p>But it is also possible to simplify the declaration in the front matter as  <code>layout: main.webc</code> provided that you declare the layouts folder inside the config file :</p>
-<pre><code class="language-json">dir: {
+<pre class="language-json"><code class="language-json">dir<span class="token operator">:</span> <span class="token punctuation">{</span>
     ...
-	layouts: "_includes/layouts"
-}
-</code></pre>
+	layouts<span class="token operator">:</span> <span class="token string">"_includes/layouts"</span>
+<span class="token punctuation">}</span></code></pre>
 <h3>cascading</h3>
 <p>There is a second layout for rendering an article, <code>post.webc</code>. It's just a container that references the main layout and displays the content of the post.</p>
-<pre><code class="language-html">---
+<pre class="language-html"><code class="language-html">---
 layout: main.webc
 ---
 
-&lt;div @html="content"&gt;&lt;/div&gt;
-</code></pre>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">@html</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>content<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span></code></pre>
 <h2>Relative links</h2>
 <p>One of the difficulties I encountered is the syntax of links in the main layout (main.webc), whose href is of the form 'assets/sub-folder/resource-file'. For example :</p>
 <p><code>&lt;link rel="stylesheet" href="assets/css/main.css" webc:keep/&gt;</code></p>
@@ -87,52 +85,48 @@ layout: main.webc
 <p>Well, we must admit that it can quickly become tiresome to copy all these attributes following each external link. In this paragraph alone it is there four times. We quickly wonder if it wouldn't be possible to make things simpler.</p>
 <p>And yes, it’s possible! Using a {.xlk} class (for example) instead. Lighter and more readable, right?</p>
 <p>This requires customizing the markdown renderer so that it adds the attributes when the class is present, but it's worth it. These few lines in the .eleventy.js and voila!</p>
-<pre><code class="language-js">// set an instance of markdownIt
-const md = new markdownIt(options).use(markdownItAttrs);
+<pre class="language-js"><code class="language-js"><span class="token comment">// set an instance of markdownIt</span>
+<span class="token keyword">const</span> md <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">markdownIt</span><span class="token punctuation">(</span>options<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span>markdownItAttrs<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-// declare a default link renderer
-const defaultLinkRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
-  return self.renderToken(tokens, idx, options);
-};
+<span class="token comment">// declare a default link renderer</span>
+<span class="token keyword">const</span> defaultLinkRender <span class="token operator">=</span> md<span class="token punctuation">.</span>renderer<span class="token punctuation">.</span>rules<span class="token punctuation">.</span>link_open <span class="token operator">||</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">tokens<span class="token punctuation">,</span> idx<span class="token punctuation">,</span> options<span class="token punctuation">,</span> env<span class="token punctuation">,</span> self</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> self<span class="token punctuation">.</span><span class="token function">renderToken</span><span class="token punctuation">(</span>tokens<span class="token punctuation">,</span> idx<span class="token punctuation">,</span> options<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
 
-// set custom render function
-md.renderer.rules.link_open = (tokens, idx, options, env, self) =&gt; {
-  const token = tokens[idx];
-  // get the class attribute
-  const classAttr = token.attrGet("class");
-  // if class attribute exists and contains the external link flag...
-  if (classAttr &amp;&amp; classAttr.split(' ').includes("xlk")) {
-    // ...add the custom attributes
-    tokens[idx].attrSet('target', '_blank');
-    tokens[idx].attrJoin("rel", "noopener noreferrer");
-  }
+<span class="token comment">// set custom render function</span>
+md<span class="token punctuation">.</span>renderer<span class="token punctuation">.</span>rules<span class="token punctuation">.</span><span class="token function-variable function">link_open</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token parameter">tokens<span class="token punctuation">,</span> idx<span class="token punctuation">,</span> options<span class="token punctuation">,</span> env<span class="token punctuation">,</span> self</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> token <span class="token operator">=</span> tokens<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token comment">// get the class attribute</span>
+  <span class="token keyword">const</span> classAttr <span class="token operator">=</span> token<span class="token punctuation">.</span><span class="token function">attrGet</span><span class="token punctuation">(</span><span class="token string">"class"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// if class attribute exists and contains the external link flag...</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>classAttr <span class="token operator">&amp;&amp;</span> classAttr<span class="token punctuation">.</span><span class="token function">split</span><span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">includes</span><span class="token punctuation">(</span><span class="token string">"xlk"</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// ...add the custom attributes</span>
+    tokens<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">attrSet</span><span class="token punctuation">(</span><span class="token string">'target'</span><span class="token punctuation">,</span> <span class="token string">'_blank'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    tokens<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">attrJoin</span><span class="token punctuation">(</span><span class="token string">"rel"</span><span class="token punctuation">,</span> <span class="token string">"noopener noreferrer"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
 
-  // Pass the token to the default renderer.
-  return defaultLinkRender(tokens, idx, options, env, self);
-};
-</code></pre>
+  <span class="token comment">// Pass the token to the default renderer.</span>
+  <span class="token keyword">return</span> <span class="token function">defaultLinkRender</span><span class="token punctuation">(</span>tokens<span class="token punctuation">,</span> idx<span class="token punctuation">,</span> options<span class="token punctuation">,</span> env<span class="token punctuation">,</span> self<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
 <h2>Dates</h2>
 <p>Regarding dates, I needed to display the post date on the home page post list items:</p>
 <p><img src="assets/img/11ty/11ty-02.png" alt="post date"></p>
 <p>For this I use <a href="https://moment.github.io/luxon/#/" target="_blank" rel="noopener noreferrer" class="xlk">Luxon</a> and declare a function in the config file :</p>
-<pre><code class="language-js">eleventyConfig.addJavaScriptFunction("postDate", (dateObj) =&gt; {
-	return DateTime.fromJSDate(dateObj).toLocaleString(DateTime.DATE_SHORT);
-});
-</code></pre>
+<pre class="language-js"><code class="language-js">eleventyConfig<span class="token punctuation">.</span><span class="token function">addJavaScriptFunction</span><span class="token punctuation">(</span><span class="token string">"postDate"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">dateObj</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+	<span class="token keyword">return</span> DateTime<span class="token punctuation">.</span><span class="token function">fromJSDate</span><span class="token punctuation">(</span>dateObj<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toLocaleString</span><span class="token punctuation">(</span>DateTime<span class="token punctuation">.</span><span class="token constant">DATE_SHORT</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
 <p>that I call inside the posts list component :</p>
-<pre><code>&lt;span @html="postDate(post.data.date)"&gt;&lt;/span&gt;
-</code></pre>
+<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>span</span> <span class="token attr-name">@html</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>postDate(post.data.date)<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>span</span><span class="token punctuation">&gt;</span></span></code></pre>
 <h2>Posts collection</h2>
 <p>In the middle of writing a new article it may happen that you have to make a update to the site (design, typo on another article, etc.). But if you make a commit, the draft of your unfinished article will also be published. To avoid this, simply tag the articles in the front matter as "published" or "draft" and declare the collection in the config file.</p>
-<pre><code class="language-js">eleventyConfig.addCollection("posts", function(collectionApi) {
-	return collectionApi.getFilteredByTag("published").sort(function(a, b) {
-  		return b.date - a.date; // sort by date - descending
-	});
-});
-</code></pre>
+<pre class="language-js"><code class="language-js">eleventyConfig<span class="token punctuation">.</span><span class="token function">addCollection</span><span class="token punctuation">(</span><span class="token string">"posts"</span><span class="token punctuation">,</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">collectionApi</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token keyword">return</span> collectionApi<span class="token punctuation">.</span><span class="token function">getFilteredByTag</span><span class="token punctuation">(</span><span class="token string">"published"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">sort</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">a<span class="token punctuation">,</span> b</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  		<span class="token keyword">return</span> b<span class="token punctuation">.</span>date <span class="token operator">-</span> a<span class="token punctuation">.</span>date<span class="token punctuation">;</span> <span class="token comment">// sort by date - descending</span>
+	<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
 <h2>CI</h2>
 <p>The CI gave me a bit of trouble, the examples found being a bit old or targeting other configurations. And the yaml syntax gave me a headache 🤒. It's a little more tricky but I choose the two repos configuration. A private one to store the source (which contains the drafts) and a public one for the deployment of the site. A commit on the private repo triggers the build and a commit of the target folder content on the private repo which itself triggers the deployment.</p>
-<pre><code class="language-xml">name: build 11ty site
+<pre class="language-xml"><code class="language-xml">name: build 11ty site
 
 on:
   push:
@@ -169,38 +163,35 @@ jobs:
           branch: main # The branch the action should deploy to.
           folder: _site # The folder the action should deploy.
           single-commit: true
-          commit-message: "Deploy by source"
-</code></pre>
+          commit-message: "Deploy by source"</code></pre>
 <p>During the development phase you may have errors. To find out what's happening, go to the Actions tab of the repo.</p>
 <p><img src="assets/img/11ty/11ty-04.png" alt="build.yml"></p>
 <h2>Scripting</h2>
 <p>I use <a href="https://typora.io/" target="_blank" rel="noopener noreferrer" class="xlk">Typora</a> for writing.</p>
 <p>Creating a new article simply involves adding a .md file to the site's posts folder and inserting the front matter there:</p>
-<pre><code>layout: post.webc
-title: About this tiny static blog site
-tags: post
-description: "How I experience eleventy and webc"
-date: 2024-03-06
-image: 
-    path: ../assets/img/11ty/posts/11ty.png
-    alt: 11ty logo
-</code></pre>
+<pre class="language-json"><code class="language-json">layout<span class="token operator">:</span> post.webc
+title<span class="token operator">:</span> About this tiny static blog site
+tags<span class="token operator">:</span> post
+description<span class="token operator">:</span> <span class="token string">"How I experience eleventy and webc"</span>
+date<span class="token operator">:</span> <span class="token number">2024</span><span class="token number">-03</span><span class="token number">-06</span>
+image<span class="token operator">:</span> 
+    path<span class="token operator">:</span> ../assets/img/11ty/posts/11ty.png
+    alt<span class="token operator">:</span> 11ty logo</code></pre>
 <p>Then I like to put Typora and my localhost site side by side and visualize the result as I type. 😁.</p>
 <p>Except there is still one problem...</p>
 <h2>Local images paths</h2>
 <p>When I insert an image into Typora, its path is logically "../assets/etc." and, if the result is correct in localhost, on the online site the image is no longer found since a <code>&lt;base href="../.."&gt;</code> was added to the main layout. To get around this difficulty, I modified the markdown renderer of the images in the config file:</p>
-<pre><code>md.renderer.rules.image = function (tokens, idx, options, env, self) 
-{
-    const token = tokens[idx];
-    let src = token.attrGet('src');
+<pre class="language-js"><code class="language-js">md<span class="token punctuation">.</span>renderer<span class="token punctuation">.</span>rules<span class="token punctuation">.</span><span class="token function-variable function">image</span> <span class="token operator">=</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token parameter">tokens<span class="token punctuation">,</span> idx<span class="token punctuation">,</span> options<span class="token punctuation">,</span> env<span class="token punctuation">,</span> self</span><span class="token punctuation">)</span> 
+<span class="token punctuation">{</span>
+    <span class="token keyword">const</span> token <span class="token operator">=</span> tokens<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> src <span class="token operator">=</span> token<span class="token punctuation">.</span><span class="token function">attrGet</span><span class="token punctuation">(</span><span class="token string">'src'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-    // truncate paths for local images 
-    token.attrSet('src', src.slice(3));
-    token.attrSet('alt', token.content);
+    <span class="token comment">// truncate paths for local images </span>
+    token<span class="token punctuation">.</span><span class="token function">attrSet</span><span class="token punctuation">(</span><span class="token string">'src'</span><span class="token punctuation">,</span> src<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    token<span class="token punctuation">.</span><span class="token function">attrSet</span><span class="token punctuation">(</span><span class="token string">'alt'</span><span class="token punctuation">,</span> token<span class="token punctuation">.</span>content<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-    return self.renderToken(tokens, idx, options)
-}
-</code></pre>
+    <span class="token keyword">return</span> self<span class="token punctuation">.</span><span class="token function">renderToken</span><span class="token punctuation">(</span>tokens<span class="token punctuation">,</span> idx<span class="token punctuation">,</span> options<span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
 <h2>Conclusion</h2>
 <p>That was my modest contribution to the eleventy universe. You'll tell me what you think about it.</p>
 <p>We have a really simple and easy to maintain static site with few files and few code in each.</p>
