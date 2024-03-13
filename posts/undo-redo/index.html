@@ -61,7 +61,8 @@
     undone
 }
 </code></pre>
-<p>A <strong>DrawingAction</strong> is created when a modification action begins. A service, which we'll see a little later, receives the storage request and generates as many <strong>DrawingActions</strong> as there are selected entities to be modified.</p>
+<h3>Starting an update</h3>
+<p>A <strong>DrawingAction</strong> is created when a modification action begins. A [service](#undo service), which we'll see a little later, receives the storage request and generates as many <strong>DrawingActions</strong> as there are selected entities to be modified.</p>
 <pre><code class="language-typescript">export class DrawingAction {
 	...
     cudOp: UndoCUDOpEnum;
@@ -73,21 +74,52 @@
     }
 }
 </code></pre>
-<p>Le constructeur reçoit l'entité qui est de type any (j'aurais pu lui donner le type de base de mes entités mais j'ai préféré rester générique à ce stade), et "<strong>cudOp</strong>" qui donne le type d'opération CUD (Create, Update, Delete) commencé sur les entités sélectionnées. On a besoin de cette information car ce n'est pas la même chose de rétablir la position d'une entité et de la réinsérée s'il elle a été supprimée ou de la supprimer si elle a été créée.</p>
-<p>"<strong>cudOp</strong>" est de type de l'énumération <strong>UndoCUDOpEnum</strong> :</p>
+<p>Le constructeur reçoit l'entité qui est de type any. J'aurais pu lui donner le type de base de mes entités mais j'ai préféré rester générique à ce stade, cette pouvant servir dans différents contextes. Le "<strong>cudOp</strong>" indique le type d'opération CUD (Create, Update, Delete) commencé sur les entités sélectionnées. On a besoin de cette information car ce n'est pas la même chose de rétablir la position d'une entité que de la réinsérer s'il elle a été supprimée ou de la supprimer si elle a été créée.</p>
+<p>Là aussi j'utilise une énumération :</p>
 <pre><code class="language-typescript">export enum UndoCUDOpEnum {
     update = 0,
     create,
     delete
 }
 </code></pre>
-<p>Le constructeur initialise l'état courant "prevState" avec un clone de l'entité.</p>
+<p>Le constructeur de <strong>DrawingAction</strong> initialise l'état courant "<strong>prevState</strong>" avec un clone de l'entité.</p>
 <pre><code class="language-typescript">private cloneState(e: any): any {
     return JSON.parse(JSON.stringify(e));
 }
 </code></pre>
-<p>"<strong>prevState</strong>" peut sembler un nom assez inapproprié pour désigner l'état courant mais il faut anticiper le fait que lorsqu'on aura fait une opération undo, les deux états "<strong>prevState</strong>" et "<strong>nextState</strong>" auront été échangés et que "<strong>prevState</strong>" correspondra effectivement à l'état précédant l'opération undo.</p>
-<p>Pour résumer ce chapitre, voilà la classe <strong>DrawingAction</strong> en entier, elle est très simple :</p>
+<p>"<strong>prevState</strong>" peut sembler un nom assez inapproprié pour désigner l'état courant mais il faut bien voir que lorsqu'on aura fait une opération undo, les deux états "<strong>prevState</strong>" et "<strong>nextState</strong>" auront été échangés et que "<strong>prevState</strong>" correspondra effectivement à l'état précédant l'opération undo.</p>
+<h3>Ending an update</h3>
+<p>Lorsqu'une opération de modification est terminée, le [service](#undo service) valorise le nouvel état des entités concernées pour chaque <strong>DrawingAction</strong> :</p>
+<pre><code class="language-typescript">push(e: any): boolean {
+    this.nextState = this.cloneState(e);
+    this.status = UndoStateEnum.restored;
+    // return false if the entity has no changes
+    return prevState !== this.nextState;
+}
+</code></pre>
+<p>On clone l'état de l'entité modifiée comme on l'avait fait pour <strong>prevState</strong> dans le constructeur. <strong>status</strong> qui était <strong>UndoStateEnum.pending</strong> dans le constructeur devient <strong>UndoStateEnum.restored</strong>. Restored parce qu'il n'y a pas de différence entre un état courant après modification et rétabli après un redo. C'est la même ambiguïté de nom qu'on a vu plus haut avec <strong>prevState</strong>.</p>
+<p>Pourquoi est-il nécessaire de passer <code>(e: any)</code> à la fonction push puisqu'on a déjà stocké <strong>entity</strong> à l'initialisation. Il s'agit d'un pointeur donc son état <strong>est</strong> l'état modifié. On pourrait très bien faire <code>this.nextState = this.cloneState(this.entity);</code> non? Et bien non car dans le cas d'une opération d'insertion l'entité n'existe pas encore au moment de l'initialisation de <strong>DrawingAction</strong>. <strong>entity</strong> et <strong>prevState</strong> sont undefined. Et ici à l'inverse c'est lors d'une opération de suppression que <strong>e</strong> et <strong>nextState</strong> sont undefined puisqu'à ce moment l'entité n'existe plus.</p>
+<p>Cette fonction retourne false si les deux états sont identiques. Cela indique que l'entité n'a pas été modifiée, ce qui se produit si l'opération de modification a été annulée par l'utilisateur avant d'être terminée. Ce retour permet au [service](undo service) de savoir s'il doit conserver la <strong>DrawingAction</strong> ou non.</p>
+<h3>Undoing / redoing</h3>
+<p>Enfin il reste à écrire les deux méthodes undo et redo, ce qui est élémentaire puisqu'il s'agit juste d'intervertir les deux états et de changer le statut.</p>
+<pre><code>undo(): void {
+    this.switchState(UndoStateEnum.undone);
+}
+
+redo(): void {
+    this.switchState(UndoStateEnum.restored);
+}
+
+private switchState(status: UndoStateEnum): void {
+    const tmp = this.prevState;
+    Object.assign(this.entity, this.prevState);
+    this.prevState = this.nextState;
+    this.nextState = tmp;
+    this.status = status;
+}
+</code></pre>
+<h3>In a nutshell</h3>
+<p>Pour résumer ce chapitre, voilà la classe <strong>DrawingAction</strong> en entier. This little piece of code is able to store and manage undo and redo ops.</p>
 <pre><code class="language-typescript">export class DrawingAction {
     entity: any;
     prevState: any;
@@ -129,6 +161,8 @@
     }
 }
 </code></pre>
+<h2>Undo service</h2>
+<p>Passons maintenant au service qui reçoit les notifications de changement et stocke les états successifs des entités modifiées.</p>
 </article>
         </div>
     
