@@ -20,7 +20,7 @@ body {
 	padding: 0;
 	margin: 0;
 	font-family: var(--font-family);
-	font-size: 19.5px;
+	font-size: 1.1rem;
 	color: var(--text-color);
 	background-color: var(--background-color);
 }
@@ -51,7 +51,17 @@ body {
  /* Extra small devices (phones, 600px and down) */
  @media only screen and (max-width: 600px) {
 	.main-container {width: 100vw;}
- }
+	html,
+	body {
+		font-size: 1rem;
+	}
+	.main {
+		font-size: 2rem;
+	}
+	.mr {
+		margin-right: 1rem !important;
+	}
+}
 
  /* Small devices (portrait tablets and large phones, 600px and up) */
  @media only screen and (min-width: 600px) {

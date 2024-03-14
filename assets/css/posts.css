@@ -34,18 +34,18 @@ pre:has(code), p code {
 
 p code {
     padding: 0.3rem;
+    font-size: 0.9rem;
 }
 
-pre:has(code) {
+/* pre:has(code) {
     padding: 0.5rem;
-    /* margin: 0 0.5rem; */
-}
+} */
 
-code {
+/* code {
     text-wrap: wrap;
     font-size: .7rem;
     font-family: "Lucida Console",Consolas,"Courier", monospace;
-}
+} */
 
 p img {
     max-width: 100%;
@@ -79,9 +79,9 @@ p img {
      hyphens: none;
  }
  
- pre > code[class*="language-"] {
+ /* pre > code[class*="language-"] {
      font-size: 1em;
- }
+ } */
  
  pre[class*="language-"]::-moz-selection, pre[class*="language-"] ::-moz-selection,
  code[class*="language-"]::-moz-selection, code[class*="language-"] ::-moz-selection {
@@ -98,8 +98,9 @@ p img {
      padding: 1em;
      margin: .5em 0;
      overflow: auto;
+     scrollbar-width: thin;
      border: 1px solid #dddddd;
-     background-color: white;
+     background-color: #f5f3f1;
  }
  
  /* Inline code */

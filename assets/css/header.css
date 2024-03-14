@@ -15,25 +15,24 @@
 .main {
     display: flex;
     align-items: center;
-    font-size: xx-large;
+    font-size: 2.5rem;
 }
 
 .avatar {
     display: grid;
-    margin-right: 12px;
 }
 
 .copy {
     font-size: 0.6em;
 }
 
-.epigraph {
+/* .epigraph {
     font-size: 0.8em;
 }
 
 .linkedin {
     margin-top: 4px;
-}
+} */
 
 .profile-img {
     border-radius: 50%;
@@ -47,5 +46,5 @@
 }
 
 .mr {
-    margin-right: 2rem;
+    margin-right: 1.5rem;
 }
