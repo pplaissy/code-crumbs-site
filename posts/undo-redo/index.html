@@ -25,6 +25,7 @@
   <div class="avatar">
     <img src="assets/img/me.png" alt="me" class="profile-img mr">
     <!-- <span class="copy" @html="'&copy; ' + currentYear() + ' P. Plaissy'"></span> -->
+    <!-- <span>P. Plaissy</span> -->
   </div>
   <div class="title">
     <div class="main">
@@ -44,6 +45,8 @@
         <div class="main-container">
             <h1>How to code a drawing undo/redo feature</h1>
 <article><p>The principle is well known so there's no need to describe it. Let's just remember that we're in the special environment of an SVG editor here, and that undo/redo operations apply to to graphical entities, lines, circles, paths and so on.</p>
+<p>A glimpse in action :</p>
+<p><img src="assets/img/undo-redo/undo01.gif" alt="undoing"></p>
 <h2>Drawing action</h2>
 <p>If you want to undo a modification to a entity, you must of course have stored the entity's state before the modification. And if you want to restore an undone modification, you must first have stored the entity's modified state.</p>
 <p>Let's set up a <strong>DrawingAction</strong> class designed to store the modification of an entity, i.e. both its "<strong>prevState</strong>" state before modification and its "<strong>nextState</strong>" state after modification. We also store "<strong>entity</strong>", a pointer to the entity itself, so we can change its state right here by applying "<strong>prevState</strong>" or "<strong>nextState</strong>" as appropriate.</p>
@@ -106,6 +109,8 @@
 
 <span class="token keyword">private</span> <span class="token function">switchState</span><span class="token punctuation">(</span>status<span class="token operator">:</span> UndoStateEnum<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
     <span class="token keyword">const</span> tmp <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>prevState<span class="token punctuation">;</span>
+    <span class="token comment">// This is a straightforward but unsafe approach. We may loose nested types. </span>
+    <span class="token comment">// For production purposes, it should be replaced by a deep cloning method.</span>
     Object<span class="token punctuation">.</span><span class="token function">assign</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>entity<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>prevState<span class="token punctuation">)</span><span class="token punctuation">;</span>
     <span class="token keyword">this</span><span class="token punctuation">.</span>prevState <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>nextState<span class="token punctuation">;</span>
     <span class="token keyword">this</span><span class="token punctuation">.</span>nextState <span class="token operator">=</span> tmp<span class="token punctuation">;</span>

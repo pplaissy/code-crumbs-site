@@ -37,6 +37,10 @@ p code {
     font-size: 0.9rem;
 }
 
+p:has(img) {
+    text-align: center;;
+}
+
 /* pre:has(code) {
     padding: 0.5rem;
 } */
