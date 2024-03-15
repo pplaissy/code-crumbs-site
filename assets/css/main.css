@@ -32,7 +32,6 @@ body {
 .main-container {
 	padding: 0 1.5rem;
 	margin: 0 auto;
-	position:relative;
 	top: 109px;
 	height: calc(100vh - 117px);
 	overflow: auto;

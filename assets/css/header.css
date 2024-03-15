@@ -13,10 +13,14 @@
 }
 
 .header::after {
-    content: "Pierre Plaissy";
+    content: "\<Pierre Plaissy/>";
     position: absolute;
     bottom: -0.3rem;
     font-family: monospace;
+    background-color: black;
+    color: white;
+    padding: 1px 5px;
+    border-radius: 13px;
 }
 
 .main {
