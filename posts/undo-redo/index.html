@@ -83,7 +83,13 @@
 <span class="token punctuation">}</span></code></pre>
 <p>The <strong>DrawingAction</strong> ctor initializes the current state "<strong>prevState</strong>" with a clone of the entity.</p>
 <pre class="language-typescript"><code class="language-typescript"><span class="token keyword">private</span> <span class="token function">cloneState</span><span class="token punctuation">(</span>e<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">any</span> <span class="token punctuation">{</span>
-    <span class="token keyword">return</span> <span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// here you need some kind of object cloning method, for example :</span>
+    <span class="token keyword">const</span> result<span class="token operator">:</span> <span class="token builtin">any</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> allPropertyNames <span class="token operator">=</span> Object<span class="token punctuation">.</span><span class="token function">getOwnPropertyNames</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    allPropertyNames<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>p <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+        result<span class="token punctuation">[</span>p<span class="token punctuation">]</span> <span class="token operator">=</span> Object<span class="token punctuation">.</span><span class="token function">getOwnPropertyDescriptor</span><span class="token punctuation">(</span>e<span class="token punctuation">,</span> p<span class="token punctuation">)</span><span class="token operator">?.</span>value<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">;</span>
 <span class="token punctuation">}</span></code></pre>
 <p>"<strong>prevState</strong>" may seem a rather inappropriate name for the current state, but it must be remembered that when an undo operation is performed, the two states "<strong>prevState</strong>" and "<strong>nextState</strong>" will have been exchanged and "<strong>prevState</strong>" will effectively correspond to the state preceding the undo operation.</p>
 <h3>Ending an update</h3>
@@ -135,7 +141,7 @@
 <pre class="language-typescript"><code class="language-typescript">actions<span class="token operator">:</span> DrawingAction<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
 pending<span class="token operator">:</span> DrawingAction<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
 
-<span class="token function">start</span><span class="token punctuation">(</span>es<span class="token operator">:</span> SelectableSvgEntity<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> cudOp<span class="token operator">:</span> UndoCUDOpEnum <span class="token operator">=</span> UndoCUDOpEnum<span class="token punctuation">.</span>update<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+<span class="token function">start</span><span class="token punctuation">(</span>es<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> cudOp<span class="token operator">:</span> UndoCUDOpEnum <span class="token operator">=</span> UndoCUDOpEnum<span class="token punctuation">.</span>update<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
     <span class="token comment">// store a temp array of entities current state</span>
     es<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>e <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
         <span class="token keyword">const</span> newAction <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">DrawingAction</span><span class="token punctuation">(</span>e<span class="token punctuation">,</span> cudOp<span class="token punctuation">)</span><span class="token punctuation">;</span>
@@ -163,7 +169,7 @@ pending<span class="token operator">:</span> DrawingAction<span class="token pun
     <span class="token punctuation">}</span>
 <span class="token punctuation">}</span></code></pre>
 <p>When the modifications are complete, the service receives a request for definitive storage and the temporary table is cleaned out. Of course, this method is never used to create or delete entities.</p>
-<pre class="language-typescript"><code class="language-typescript"><span class="token function">store</span><span class="token punctuation">(</span>es<span class="token operator">:</span> SelectableSvgEntity<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+<pre class="language-typescript"><code class="language-typescript"><span class="token function">store</span><span class="token punctuation">(</span>es<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
     <span class="token comment">// store the entities new state</span>
     es<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>e <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
         <span class="token comment">// entity should be found in temp array</span>
@@ -260,7 +266,10 @@ deleteRequested<span class="token operator">?</span><span class="token operator"
 <p>Yes, you guessed it, that's the super bonus!</p>
 <p>You may have wondered why the <strong>undoLast</strong> and <strong>redoLast</strong> methods expect an array of <code>ids: string[]</code> identifiers. And indeed, it seems pointless, since the service already knows which entities are present on the movie. Well, this way it becomes possible to apply forward or reverse state changes to only some of them.</p>
 <p>How does it work? If no entities are selected on the drawing, then <strong>undo</strong> or <strong>redo</strong> apply to all actions recorded in <strong>UndoService</strong>. If one or more entities are selected on the drawing, only these will be affected.</p>
-<p>A killer feature, isn't it ? And almost code free, watch it in action !</p>
+<p>A killer low code feature, isn't it ? Watch it in action !</p>
+<p>Let's say I've modified this series of lines and want to go back only on the middle four...</p>
+<p><img src="assets/img/undo-redo/undo02.gif" alt="undoing"></p>
+<p>Thanks for checking by. Yoiu can find the code on <a href="https://github.com/pplaissy/undo-redo">github</a>.</p>
 </article>
         </div>
     
