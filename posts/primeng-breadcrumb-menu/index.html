@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <base href="../..">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Some code crumbs dropped along my coding <path/>">
+        <meta name="keywords" content="Eleventy, Web Components, JS, HTML, JavaScript, SVG">
+        <meta name="generator" content="Eleventy">
+        <meta name="author" content="Pierre Plaissy">
+
+        <meta property="og:title" content="Case study for a PrimeNG MenuBar/Breadcrumb combo">
+        <meta property="og:type" content="article">
+        <meta property="og:URL" content="https://code-crumbs.pplaissy.fr/posts/primeng-breadcrumb-menu/">
+        <meta property="og:image" content="https://code-crumbs.pplaissy.fr/assets/img/primeng-opt-switcher/primeng-logo.png">
+        <meta property="og:description" content="What if a breadcrumb could act as a router somehow like in the Windows file explorer address bar">
+
+        <title>Code crumbs</title>
+        <link rel="icon" href="assets/img/favicon.ico">
+        <link rel="stylesheet" href="assets/css/main.css">
+        <link rel="stylesheet" href="assets/css/posts.css">
+    </head>
+    <body>
+        <nav class="header">
+  <div class="avatar">
+    <img src="assets/img/me.png" alt="me" class="profile-img mr">
+    <!-- <span class="copy" @html="'&copy; ' + currentYear() + ' P. Plaissy'"></span> -->
+    <!-- <span>P. Plaissy</span> -->
+  </div>
+  <div class="title">
+    <div class="main">
+      <a href="#" class="nav-item mr">code crumbs</a>
+      <a href="https://www.linkedin.com/in/pierreplaissy/" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer" class="linkedin">
+    <img src="assets/img/linkedin.svg" alt="LinkedIn" width="24" height="24" class="mb-1">
+</a>
+
+    </div>
+    <!-- <div class="epigraph">
+      <span>Some code crumbs dropped along my coding &lt;path&#47;&gt;</span>
+    </div> -->
+  </div>
+</nav>
+<link rel="stylesheet" href="assets/css/header.css">
+
+        <div class="main-container">
+            <h1>Case study for a PrimeNG MenuBar/Breadcrumb combo</h1>
+<article><p>An application with significant functional depth has a multi-level menu. The menu tree reflects the application's functional architecture, and its coherence is the foundation of overall ergonomics.</p>
+<p>We're all familiar with some sophisticated applications where we really wonder why such and such a menu entry is in such and such a place. And if you're unfamiliar with these applications, you'll always spend some time browsing the menu entries before finding what you're looking for. And yet, let there be no doubt, the developers have made a real effort to arrange all this in an optimal way.</p>
+<p>It's not always easy to systematically structure the different views, especially when there are strong adhesions between functional sets or when there are certain exceptions to integrate.</p>
+<p>The user must be able to navigate easily within the application and, in addition to the menu structure itself, it's important to understand where you are at the moment. This is the purpose of the breadcrumb trail, which is a visual reminder of the path followed within the menu tree.</p>
+<p>With <a href="https://primeng.org/breadcrumb">PrimeNG</a> we have these two components, <strong>Menubar</strong> and <strong>Breadcrumb</strong>, which can be linked to offer clear navigation. This is shown in this screenshot taken with the examples provided on PrimeNG site.</p>
+<p><img src="assets/img/primeng-breadcrumb-menu/breadcrumbmenu01.gif" alt="Menubar &amp; Breadcrumb working together"></p>
+<p>this being said, all this takes up a lot of screen space, and this can be a problem for certain views that require the maximum amount of screen space. Not to mention that, in terms of ergonomics, it's always preferable to limit the amount of visual information to that which is imperative for the immediate actions to be carried out on the view in question. With the menu and breadcrumb, there's already a lot of visual noise before any data has even been displayed. So, as you can see, it's a never-ending battle to find the right balance.</p>
+<p>One option would be to merge the two components into a single one by coding a breadcrumb that also serves as a menu. The Windows file explorer address bar works exactly like this, which I find really handy.</p>
+<p><img src="assets/img/primeng-breadcrumb-menu/breadcrumbmenu02.gif" alt="Window file explorer adress bar"></p>
+<p>It's a little exercise I came up with as part of my research on <a href="https://ecsy.fr">ecsy</a> and I'd like to share it with you here. The full code can be found in this <a href="https://github.com/pplaissy/breadcrumb-menu">repo</a>. It's obviously not intended to be used as is in production, but you can easily optimize it and adapt it to your context. Here it is in action. I've used the same demo dataset as the <a href="https://primeng.org/menubar">PrimeNG Menubar</a> component to make comparison easy.</p>
+<p><img src="assets/img/primeng-breadcrumb-menu/breadcrumbmenu03.gif" alt="Breadcumb menu"></p>
+<p>As usual, you can try it out for yourself:</p>
+<pre><code>clone the repo
+npm install
+npm run start
+</code></pre>
+<h2>UI</h2>
+<p>There are two very simple ng components:</p>
+<ul>
+<li><strong>BreadcrumbMenuComponent</strong> which is the global wrapper</li>
+<li><strong>BreadcrumbMenuSetComponent</strong>, which is a segment of the breadcrumb and carries a menu set.</li>
+</ul>
+<p><strong>BreadcrumbMenuComponent</strong> is a loop that displays a succession of segments separated by a right chevron:</p>
+<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>flex align-items-center<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+    @for (item of model.path; track $index) {
+        @if (item.depth &gt; 0) {
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>i</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>pi pi-angle-right<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>i</span><span class="token punctuation">&gt;</span></span>
+        }
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>breadcrumb-menu-set</span> <span class="token attr-name">[model]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>item<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span>
+    }
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span></code></pre>
+<p>BreadcrumbMenuSet is a <a href="https://primeng.org/menu">PrimeNG Menu</a> popup component with a template to display a tick on the selected item:</p>
+<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p-menu</span> <span class="token attr-name">#menu</span> <span class="token attr-name">[model]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>model.menuItems<span class="token punctuation">"</span></span> <span class="token attr-name">[popup]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>true<span class="token punctuation">"</span></span> <span class="token attr-name">(onShow)</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>onShow()<span class="token punctuation">"</span></span> <span class="token attr-name">(onHide)</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>onHide()<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>ng-template</span> <span class="token attr-name">pTemplate</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>i<span class="token punctuation">"</span></span> <span class="token attr-name">let-i</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>flex justify-content-between p-2 cursor-pointer<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>span</span><span class="token punctuation">&gt;</span></span> <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>span</span><span class="token punctuation">&gt;</span></span>
+            @if (i.selected) {
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>i</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>pi pi-check<span class="token punctuation">"</span></span> <span class="token special-attr"><span class="token attr-name">style</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span><span class="token value css language-css"><span class="token property">color</span><span class="token punctuation">:</span> #00a500</span><span class="token punctuation">"</span></span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>i</span><span class="token punctuation">&gt;</span></span>
+            }
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>ng-template</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p-menu</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p-button</span> <span class="token attr-name">#menuButton</span> <span class="token attr-name">[text]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>true<span class="token punctuation">"</span></span> <span class="token attr-name">[severity]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>model.hasSelected ? '' : 'warning'<span class="token punctuation">"</span></span> <span class="token attr-name">(click)</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>menu.toggle($event)<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p-button</span><span class="token punctuation">&gt;</span></span></code></pre>
+<p>Note I deliberately omitted the parentheses in the extract above on  due to a build issue with 11ty/liquid, nothing to do with our topic.</p>
+<h2>Model</h2>
+<p>The dataset used is that of PrimeNG, but I needed additional properties, the item's parentId and its depth in the tree. My menu item is therefore an extension of the PrimeNG MenuItem.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">interface</span> <span class="token class-name">ExtendedMenuItem</span> <span class="token keyword">extends</span> <span class="token class-name">MenuItem</span> <span class="token punctuation">{</span>
+    id<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+    parentId<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+    depth<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+    label<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+    items<span class="token operator">?</span><span class="token operator">:</span> ExtendedMenuItem<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    icon<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token operator">|</span> <span class="token keyword">undefined</span><span class="token punctuation">;</span>
+    command<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>The data source is initialized in <code>AppComponent.ngOnInit()</code>, as are the datasets for the Menubar (mbItems), Breadcrumb (bcItems) and BreadcrumbMenu (breadcrumbMenu).</p>
+<p>The mbItems and bcItems properties are simple arrays. They are used here unprocessed to compare behaviors.</p>
+<h3>BreadcrumbMenu</h3>
+<p>The breadcrumbMenu property, on the other hand, is a <strong>BreadcrumbMenu</strong> class that embeds the component's logic. It is initialized from the flattening of the mbItems array:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">this</span><span class="token punctuation">.</span>breadcrumbMenu <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">BreadcrumbMenu</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>flatMbItems<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>The mbItems array is flattened using a classic recursive function:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token function">flattenMenuItems</span><span class="token punctuation">(</span>items<span class="token operator">:</span> ExtendedMenuItem<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> ExtendedMenuItem<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token punctuation">{</span>
+<span class="token keyword">const</span> result<span class="token operator">:</span> ExtendedMenuItem<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+items<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>i <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  result<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>i<span class="token punctuation">.</span>items<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    result<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">flattenMenuItems</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>items<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">return</span> result<span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>The <strong>BreadcrumbMenuComponent</strong> expects a model of type <strong>BreadcrumbMenu</strong>...</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">BreadcrumbMenuComponent</span> <span class="token punctuation">{</span>
+  <span class="token decorator"><span class="token at operator">@</span><span class="token function">Input</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> model<span class="token operator">:</span> BreadcrumbMenu <span class="token operator">|</span> <span class="token keyword">undefined</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>... and this model is provided by the parent <strong>AppComponent</strong> :</p>
+<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>flex flex-column gap-2<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+	...
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p-panel</span> <span class="token attr-name">header</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>Menubar &amp; Breadcrumb mix<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+		...
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>breadcrumb-menu</span> <span class="token attr-name">[model]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>breadcrumbMenu<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p-panel</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span></code></pre>
+<p>The <strong>BreadcrumbMenu</strong> class is built from an external data source which is an array of items of type <strong>ExtendedMenuItem</strong>. In a real project, the source may come from an api call.</p>
+<p>The tricky thing here is structuring the dataset from the source. To be able to navigate the menu via the breadcrumb, it needs to "know" all the possible paths. Each segment of the breadcrumb is a list of items, some of which are end points that trigger the display of a view, others of which are waypoints to lower levels.</p>
+<p>It's this structuring of the source dataset into breadcrumb segments that ultimately mobilizes the most code in the <strong>BreadcrumnMenu</strong> class:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">private</span> <span class="token function">buildSets</span><span class="token punctuation">(</span>flatMenuItems<span class="token operator">:</span> ExtendedMenuItem<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> items<span class="token operator">:</span> AppMenuItem<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> parentSet<span class="token operator">:</span> AppMenuSet<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+	<span class="token operator">...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">private</span> <span class="token function">addSet</span><span class="token punctuation">(</span>id<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span> depth<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">,</span> parent<span class="token operator">:</span> AppMenuSet<span class="token punctuation">,</span> menuItems<span class="token operator">:</span> AppMenuItem<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> AppMenuSet <span class="token punctuation">{</span>
+	<span class="token operator">...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">private</span> <span class="token function">addMenuSet</span><span class="token punctuation">(</span>m<span class="token operator">:</span> AppMenuItem<span class="token punctuation">,</span> parent<span class="token operator">:</span> AppMenuSet<span class="token punctuation">)</span><span class="token operator">:</span> AppMenuSet <span class="token punctuation">{</span>
+	<span class="token operator">...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">private</span> <span class="token function">addSingleSets</span><span class="token punctuation">(</span>parent<span class="token operator">:</span> AppMenuSet<span class="token punctuation">,</span> menuItems<span class="token operator">:</span> AppMenuItem<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+	<span class="token operator">...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">private</span> <span class="token function">getMenuItem</span><span class="token punctuation">(</span>id<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span> label<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span> depth<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">,</span> deadEnd<span class="token operator">:</span> <span class="token builtin">boolean</span><span class="token punctuation">)</span><span class="token operator">:</span> AppMenuItem <span class="token punctuation">{</span>
+	<span class="token operator">...</span>
+<span class="token punctuation">}</span></code></pre>
+<p>There must be some way of simplifying this for real-life use.</p>
+<p>Selecting a menu item adds a segment to the breadcrumb, and if the item is a waypoint, the list of lower levels opens automatically to facilitate input. Always on the hunt for clicks 😁.</p>
+<p>In short, the model has the following structure:</p>
+<ul>
+<li><strong>AppMenuItem</strong> is the basic menu item</li>
+<li><strong>AppMenuSet</strong> is the set of basic elements making up a breadcrumb segment.</li>
+<li><strong>BreadcrumbMenu</strong> portrays the segment hierarchy and the currently selected path.</li>
+</ul>
+<p>I won't go into the details of the model, the code is very simple and speaks for itself.</p>
+<p>Il y a sûrement moyen de simplifier tout ça en vue d'une utilisation réelle.</p>
+<h2>To conclude</h2>
+<p>So that's it, in the end this work remained in the draft state and I've never used it in a real situation, so far. It would be great if you could let me know if you implement it somewhere.</p>
+<h3>Todo</h3>
+<p>The thing that's missing from this demo is a little chevron icon that tells the user whether a drop-down menu entry has children or not. This way, the user knows in advance what's going to happen if he clicks on it, whether to display a sub-menu and thus extend the breadcrumb or display a view.</p>
+<p>⌨️ Get coding!</p>
+</article>
+        </div>
+    
+</body>
+</html>
