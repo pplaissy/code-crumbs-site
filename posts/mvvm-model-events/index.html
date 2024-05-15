@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <base href="../..">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Some code crumbs dropped along my coding <path/>">
+        <meta name="keywords" content="Eleventy, Web Components, JS, HTML, JavaScript, SVG">
+        <meta name="generator" content="Eleventy">
+        <meta name="author" content="Pierre Plaissy">
+
+        <meta property="og:title" content="Managing model events in MVVM pattern context">
+        <meta property="og:type" content="article">
+        <meta property="og:URL" content="https://code-crumbs.pplaissy.fr/posts/mvvm-model-events/">
+        <meta property="og:image" content="https://code-crumbs.pplaissy.fr/assets/img/mvvm-model-events/thumbnail.png">
+        <meta property="og:description" content="In a project where it is not the view that drives but the model how to make the different parts of the model communicate">
+
+        <title>Code crumbs</title>
+        <link rel="icon" href="assets/img/favicon.ico">
+        <link rel="stylesheet" href="assets/css/main.css">
+        <link rel="stylesheet" href="assets/css/posts.css">
+    </head>
+    <body>
+        <nav class="header">
+  <div class="avatar">
+    <img src="assets/img/me.png" alt="me" class="profile-img mr">
+    <!-- <span class="copy" @html="'&copy; ' + currentYear() + ' P. Plaissy'"></span> -->
+    <!-- <span>P. Plaissy</span> -->
+  </div>
+  <div class="title">
+    <div class="main">
+      <a href="#" class="nav-item mr">code crumbs</a>
+      <a href="https://www.linkedin.com/in/pierreplaissy/" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer" class="linkedin">
+    <img src="assets/img/linkedin.svg" alt="LinkedIn" width="24" height="24" class="mb-1">
+</a>
+
+    </div>
+    <!-- <div class="epigraph">
+      <span>Some code crumbs dropped along my coding &lt;path&#47;&gt;</span>
+    </div> -->
+  </div>
+</nav>
+<link rel="stylesheet" href="assets/css/header.css">
+
+        <div class="main-container">
+            <h1>Managing model events in MVVM pattern context</h1>
+<article><p>NOTA : Les exemples utilisé ici sont codés sous Angular et PrimeNG. La syntaxe serait éventuellement différente avec une autre stack. La structure des fichiers est simplifiée. J'ai supprimé tout ce qui était inutile à la démonstration pour que ce soit plus lisible. Le cycle de chargement des données n'est pas implémenté toujours pas soucis de clarté.</p>
+<p>In a project where it is not the view that drives but the model how to make the different parts of the model communicate.</p>
+<h2>About standard event binding</h2>
+<p>Les changements d'états et les interactions utilisateurs sont des évènements qui induisent des changements dans l'UI et dans les datas sous-jacentes. Une notification arrivant sur un thread de messagerie écouté par l'application, un click de l'utilisateur sur un bouton de l'interface ou la frappe d'une touche du clavier sont des évènements qui produisent des changements, visibles et invisibles.</p>
+<p>N'importe quelle lib DOM intègre la gestion de ces évènements de façon transparente en permettant de relier un élément de l'interface (une balise du DOM) à un élément sous-jacent (une valeur ou une fonction du modèle) au moyen d'une syntaxe dédiée. Intercepter le click sur un bouton implique par exemple de déclarer dans la vue que l'on souhaite lier le click de la souris <code>(click)</code> à une fonction que l'on doit écrire par ailleurs et nommée <code>onSave()</code>. Ce qu'on obtiendra par la déclaration suivante : <code>&lt;button (click)="onSave()"&gt;Save&lt;/button&gt;</code>.</p>
+<p>Bref, tout cela est connu de tout développeur, ce n'est pas le sujet. Si, comme moi, vous cherchez à découpler au maximum la vue du modèle (<a href="https://angular.fr/get_started/mvvm.html">MVVM pattern</a>), vous aurez besoin d'un mécanisme complémentaire pour lier des évènements entre les différentes classes de votre modèle de vue.</p>
+<h2>Simple MVVM event feature</h2>
+<p>Un exemple simple pour commencer avec la gestion du click sur les items de menu. Chaque item de menu déclare une propriété command <code>command: () =&gt; this.menuItemClick(#menuId)</code> qui renvoi sur une méthode qui centralise les clicks et exécute la méthode du listener si elle a été déclarée. On passe directement l'id du menu item en argument mais pour renforcer le contrôle du type on pourrait utiliser une classe abstraite EventArg avec différentes déclinaisons pour différents types d'évènements .</p>
+<p>C'est une forme d'injection de dépendance. Le listener injecte sa méthode d'écoute dans la classe qui produit l'évènement. Dans cet exemple il s'agit de <strong>AppVM</strong> qui est la racine du modèle de vue et de <strong>ToolbarVM</strong> qui est le modèle sous-jacent au composant.</p>
+<p>Voilà ce que ça donne dans l'application :</p>
+<p><img src="assets/img/mvvm-model-events/mvvm-events01.gif" alt="simple event binding"></p>
+<p>C'est une façon très pratique de brancher deux classes qui ont une relation directe, ici de parent à enfant. Elle est par contre limitée par le fait que :</p>
+<ul>
+<li>justement les classes doivent avoir connaissance l'une de l'autre dans l'arborescence du modèle, je veux dire que si on peut déclarer <code>this.toolbarVM.menuItemClicked = this.menuItemClicked.bind(this);</code> dans le constructeur de <strong>AppVM</strong> c'est bien parce qu'on dispose dans ce contexte à la fois d'une instance de <strong>AppVM</strong> et d'une instance de <strong>ToolbarVM</strong>.</li>
+<li>il ne peut y avoir qu'un unique listener pour un évènement.</li>
+</ul>
+<h2>Extended MVVM event feature</h2>
+<p>On va voir maintenant comment on peut apporter une solution à ces deux limites c'est-à-dire :</p>
+<ul>
+<li>permettre plusieurs listeners pour un même évènement</li>
+<li>permettre de brancher un listener sur un émetteur distants l'un de l'autre. Distants à la fois dans l'arborescence du modèle de vue et dans le cycle de vie de l'application. L'écouteur et l'émetteur peuvent être arbitrairement éloignés dans l'arbre du modèle de vue et être instanciés à différents moments du cycle de vie de l'application.</li>
+</ul>
+<p>Certes plus sophistiquée que la version simple, la solution complète se résume néanmoins à quelques classes et peu de code :</p>
+<table>
+<thead>
+<tr>
+<th>Event classes</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EventCallbackStore</td>
+<td>events callbacks store</td>
+</tr>
+<tr>
+<td>EventEmitter</td>
+<td>event emitter model must inherit from this abstract base class</td>
+</tr>
+<tr>
+<td>EventListener</td>
+<td>event listener model must inherit from this abstract base class</td>
+</tr>
+<tr>
+<td>EventProcess</td>
+<td>events callback wrapper as stored in <strong>EventCallbackStore</strong></td>
+</tr>
+<tr>
+<td>IEventListener</td>
+<td>contract structure for an event model</td>
+</tr>
+<tr>
+<td>ModelEventLifeCycle</td>
+<td>abstract base class for view components whose model is an <strong>IEventListener</strong></td>
+</tr>
+<tr>
+<td>AppEventsEnum</td>
+<td>just an enum for events names</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Utilities classes</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>readableUUID</td>
+<td>small function to return a human readable unique id for better console log experience</td>
+</tr>
+<tr>
+<td>LoggerService</td>
+<td>console log utilities with messages grouping and prod context checking</td>
+</tr>
+</tbody>
+</table>
+<p>A noter que cette solution nécessite un système d'injection de dépendances. J'utilise la lib de Microsoft <a href="https://github.com/microsoft/tsyringe">tsyringe</a>.</p>
+<h3>A few pointers about MVVM</h3>
+<p>Vous noterez au passage l'architecture particulière utilisée pour le MVVM. Un composant de vue est lié à son modèle de vue via une propriété injectée que je nomme toujours 'model'.</p>
+<pre class="language-ts"><code class="language-ts"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">RightPanelComponent</span> <span class="token keyword">extends</span> <span class="token class-name">ModelEventLifeCycle</span> <span class="token punctuation">{</span>
+  <span class="token decorator"><span class="token at operator">@</span><span class="token function">Input</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> override model<span class="token operator">:</span> RightPanelVM <span class="token operator">|</span> <span class="token keyword">undefined</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>La vue n'est chargée dans le DOM que lorsque 'model' est instancié :</p>
+<pre class="language-html"><code class="language-html">@if (model) {
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>flex flex-column gap-5<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>h3</span><span class="token punctuation">&gt;</span></span>Right panel<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>h3</span><span class="token punctuation">&gt;</span></span>
+        ...
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+}</code></pre>
+<p>Et bien sûr, à l'exception de la racine de l'arborescence du modèle de vue qui est initialisé par la page racine (<strong>AppComponent</strong> instancie <strong>AppVM</strong>), ce n'est jamais le composant de vue qui instancie son modèle mais c'est parce qu'une instance du modèle est créée par son modèle parent que la vue correspondante est injectée dans le DOM.</p>
+<p>C'est l'arbre modèle qui pilote l'arbre de vue.</p>
+<p>Il n'y a rien d'autre que la déclaration du modèle de vue dans le fichier ts du composant. Le couplage entre la vue et le modèle est ainsi réduit au strict minimum.</p>
+<h3>ModelEventLifeCycle</h3>
+<p>Listeners are callback methods qui sont appelées lorsque l'évènement est émis. Puisqu'il peut y avoir plusieurs listeners pour un même évènement, plusieurs callbacks seront exécutés lors de l'émission de l'évènement.</p>
+<p>Mais lorsqu'un listener est détruit, à l'occasion d'un changement de vue par exemple parce que le modèle de vue n'est plus utilisé, on veut s'assurer de la destruction immédiate des callbacks associés à ce listener.</p>
+<p>La méthode consiste à utiliser le <code>ngOnDestroy()</code> du cycle de vie du composant de vue pour détruire les callbacks. Chaque composant de vue dont le modèle de vue est un event listener doit étendre un composant de base <code>ModelEventLifeCycle</code>.</p>
+<pre class="language-ts"><code class="language-ts"><span class="token decorator"><span class="token at operator">@</span><span class="token function">Component</span></span><span class="token punctuation">(</span><span class="token punctuation">{</span> template<span class="token operator">:</span> <span class="token string">''</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">abstract</span> <span class="token keyword">class</span> <span class="token class-name">ModelEventLifeCycle</span> <span class="token keyword">implements</span> <span class="token class-name">OnChanges</span><span class="token punctuation">,</span> OnDestroy <span class="token punctuation">{</span>
+    <span class="token decorator"><span class="token at operator">@</span><span class="token function">Input</span></span><span class="token punctuation">(</span><span class="token punctuation">)</span> model<span class="token operator">:</span> IEventListener <span class="token operator">|</span> <span class="token keyword">undefined</span><span class="token punctuation">;</span>
+
+    <span class="token function">ngOnChanges</span><span class="token punctuation">(</span>changes<span class="token operator">:</span> SimpleChanges<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> modelChanges <span class="token operator">=</span> changes<span class="token punctuation">[</span><span class="token string">"model"</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>modelChanges <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>modelChanges<span class="token punctuation">.</span>firstChange <span class="token operator">&amp;&amp;</span> modelChanges<span class="token punctuation">.</span>previousValue<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment">// remove the listeners if a new instance of the model is created</span>
+            <span class="token punctuation">(</span>modelChanges<span class="token punctuation">.</span>previousValue <span class="token keyword">as</span> IEventListener<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">removeListeners</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token function">ngOnDestroy</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+        <span class="token comment">// remove the listeners</span>
+        <span class="token comment">// in some cases, model and listeners could have been already destroyed par the parent model</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>model<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>model<span class="token punctuation">.</span><span class="token function">removeListeners</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Ce composant se charge de supprimer les callbacks lorsque le modèle de la vue est réinstancié ou que le composant est retiré du DOM.</p>
+<p>Un composant de vue dont le modèle est un event listener doit étendre <code>ModelEventLifeCycle</code> et overrider le modèle de base avec son propre modèle de vue <code>@Input() override model:...</code>.</p>
+<h3>IEventListener</h3>
+<p>Un modèle de vue qui doit écouter des évènements doit implémenter cette interface dont le contrat comporte un identifiant unique et deux méthodes de gestion des écoutes.</p>
+<pre class="language-ts"><code class="language-ts"><span class="token keyword">export</span> <span class="token keyword">interface</span> <span class="token class-name">IEventListener</span> <span class="token punctuation">{</span>
+    invariantId<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+    <span class="token function">addEventListener</span><span class="token punctuation">(</span>methodName<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span> method<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span><span class="token punctuation">;</span>
+    <span class="token function">removeListeners</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h3>readableUUID</h3>
+<p>Just a small tool to return a human readable unique id for better console log better experience.</p>
+<pre class="language-ts"><code class="language-ts"><span class="token keyword">export</span> <span class="token keyword">function</span> <span class="token function">readableUUID</span><span class="token punctuation">(</span>prefix<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>prefix<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>crypto<span class="token punctuation">.</span><span class="token function">randomUUID</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Which in the console results, for example, in :</p>
+<p><img src="assets/img/mvvm-model-events/readable-uuid-in-console.png" alt="readable UUID"></p>
+<h3>EventProcess</h3>
+<p>When an <strong>IEventListener</strong> view model add a new event listener, an <strong>EventProcess</strong> is registered into the event callback store.</p>
+<pre class="language-ts"><code class="language-ts"><span class="token comment">// EventCallbackStore excerpt</span>
+<span class="token function">addEventListener</span><span class="token punctuation">(</span>listenerId<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span> eventName<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span> method<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> process <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">getProcess</span><span class="token punctuation">(</span>listenerId<span class="token punctuation">,</span> eventName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>process<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment">// if the process already exists, replace the callback method</span>
+        process<span class="token punctuation">.</span>method <span class="token operator">=</span> method<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token comment">// else create a new event process</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>processes<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">EventProcess</span><span class="token punctuation">(</span>listenerId<span class="token punctuation">,</span> eventName<span class="token punctuation">,</span> method<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<h3>EventEmitter</h3>
+<p>What does it mean to emit an event ? When a EventEmitter view model call its <code> async emitEventAsync(eventName: string, arg1?: any): Promise&lt;any&gt; {}</code> method, it execute each <strong>EventProcess</strong> stored in the <strong>EventCallbackStore</strong> whose that have the same <strong>eventName</strong> which is equivalent for the event to being received by the listener, because the EventProcess callback method belongs to the listener.</p>
+<h3>EventListener</h3>
+<p>A view model can be just an <strong>EventEmitter</strong> if it doesn't need to listen to any event. But an <strong>EventListener</strong> is also an <strong>EventEmitter</strong>. this architecture is due to the limitation of type script, which does not allow mutliple inheritance. So <strong>EventListener</strong> extends <strong>EventEmitter</strong>.</p>
+<pre class="language-ts"><code class="language-ts"><span class="token keyword">export</span> <span class="token keyword">abstract</span> <span class="token keyword">class</span> <span class="token class-name">EventListener</span> <span class="token keyword">extends</span> <span class="token class-name">EventEmitter</span> <span class="token keyword">implements</span> <span class="token class-name">IEventListener</span> <span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span></code></pre>
+<p>An <strong>EventListener</strong> must be instanciated with a unique identifier that is generated using the <strong>readableUUID</strong> tool.</p>
+<pre class="language-ts"><code class="language-ts"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">RightPanelVM</span> <span class="token keyword">extends</span> <span class="token class-name">EventListener</span> <span class="token punctuation">{</span>
+	<span class="token operator">...</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">super</span><span class="token punctuation">(</span><span class="token function">readableUUID</span><span class="token punctuation">(</span>RightPanelVM<span class="token punctuation">.</span>name<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token operator">...</span>
+    <span class="token punctuation">}</span>
+    <span class="token operator">...</span>
+<span class="token punctuation">}</span></code></pre>
+<p>And call its addEventListener base method to register in the EventCallbackStore in the name of the listener unique id.</p>
+<pre class="language-ts"><code class="language-ts"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span>#event name#<span class="token punctuation">,</span> <span class="token punctuation">(</span>#event arg#<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    #callback instructions#
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>Note that the callback method can be async, very handy to wait for an api call result.</p>
+<pre class="language-ts"><code class="language-ts"><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span>#event name#<span class="token punctuation">,</span> <span class="token keyword">async</span> <span class="token punctuation">(</span>#event arg#<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword">await</span> <span class="token function">something</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<h2>The Sample App</h2>
+<h2>To conclude</h2>
+<p>Malgré la longueur inévitable des explications ce système est finalement très simple et se résume à peu de code.</p>
+</article>
+        </div>
+    
+</body>
+</html>
