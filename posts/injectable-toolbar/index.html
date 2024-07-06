@@ -13,7 +13,7 @@
         <meta property="og:type" content="article">
         <meta property="og:URL" content="https://code-crumbs.pplaissy.fr/posts/injectable-toolbar/">
         <meta property="og:image" content="https://code-crumbs.pplaissy.fr/assets/img/toolbar-injection/thumbnail.png">
-        <meta property="og:description" content>
+        <meta property="og:description" content="Today I'd like to show you how you can use this method to inject one view component into another, thus creating a dynamic toolbar">
 
         <title>Code crumbs</title>
         <link rel="icon" href="assets/img/favicon.ico">
@@ -47,7 +47,56 @@
 
         <div class="main-container">
             <h1>Using MVVM events model to create a dynamic toolbar</h1>
-<article><p>NOTE: The examples used here are coded in Angular and PrimeNG. The syntax might be different with another stack. The file structure is simplified. I've</p>
+<article><p>Some time ago I wrote <a href="https://code-crumbs.pplaissy.fr/posts/mvvm-model-events/">an article</a> on a method for handling events in model classes when applying the <strong>MVVM pattern</strong>.</p>
+<p>If you haven't already done so, I suggest you read it before going any further.</p>
+<p>Today I'd like to show you how you can use this method to inject one view component into another, thus creating a dynamic toolbar.</p>
+<p>This is the principle behind ribbons as implemented in Word or Autocad. The contents of the ribbon automatically adapt to the context of use. Some generic tools are always available, while others are added or removed depending on the context.</p>
+<h2>Demo app</h2>
+<p>Let's see how to implement this principle in the toolbar of a small demo web application. The main toolbar contains a menu of 3 pages, <strong>Home</strong>, <strong>Document</strong>, <strong>Charts</strong>. When you display the <strong>Document page</strong> justification commands are injected into the toolbar, which you can use to format the text. When you display the <strong>Charts page</strong> the commands injected into the toolbar offer different types of graph to render the datas.</p>
+<p>To keep the focus on the essentials, I haven't implemented a model tree. So don't be surprised if it's the view components that initialize their own model in their constructors. This would obviously not be coded like this in a "real" application.</p>
+<p><strong>MainToolbar</strong> is the main toolbar. It contains the application menu and <strong>NestedToolbar</strong>, the component responsible for displaying contextual tools. Each page requiring a specific toolbar has its own dedicated toolbar component. <strong>DocumentToolbar</strong> for the Document page, <strong>ChartsToolbar</strong> for the Charts page. <strong>NestedToolbar</strong> is a simple switcher that displays the component corresponding to the current model type.</p>
+<pre class="language-html"><code class="language-html"><span class="token comment">&lt;!-- NestedToolbar --&gt;</span>
+@switch (model.type) {
+    @case (NestedToolbarType.document) {
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>app-document-toolbar</span> <span class="token attr-name">[model]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>model<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span>
+    }
+    @case (NestedToolbarType.charts) {
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>app-charts-toolbar</span> <span class="token attr-name">[model]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>model<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span>
+    }
+}</code></pre>
+<p>Then it's all about events.</p>
+<h2>Component injection</h2>
+<p>The instantiation of a page's view model triggers an <code>AppEventsEnum.nestedToolbarAvailable</code> event, requesting the injection of specific tools into the <strong>NestedToolbar</strong>. The view model attaches an instance of the dedicated toolbar view model class to the event. The home page, which does not require a specific tool, passes an undefined view model, which will empty the <strong>NestedToolbar</strong>.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token comment">// DocumentVM ctor</span>
+<span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token operator">...</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">emitEventAsync</span><span class="token punctuation">(</span>AppEventsEnum<span class="token punctuation">.</span>nestedToolbarAvailable<span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">DocumentToolbarVM</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token operator">...</span>
+<span class="token punctuation">}</span></code></pre>
+<p>On the other hand, the <strong>MainToolbar</strong> listens to this same <code>AppEventsEnum.nestedToolbarAvailable</code> event and retrieves the instance of the dedicated toolbar view model, triggering its display.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token comment">// MainToolbarVM ctor</span>
+<span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token operator">...</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span>AppEventsEnum<span class="token punctuation">.</span>nestedToolbarAvailable<span class="token punctuation">,</span> <span class="token punctuation">(</span>nestedToolbar<span class="token operator">:</span> NestedToolbarBase<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>nestedToolbar <span class="token operator">=</span> nestedToolbar<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h2>Action binding</h2>
+<p>When instantiated, the view model of a dedicated toolbar emits events related to the use of its commands and sends the necessary arguments, in this case the text justification value.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token function">onOptionChange</span><span class="token punctuation">(</span>e<span class="token operator">:</span> SelectButtonChangeEvent<span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">emitEventAsync</span><span class="token punctuation">(</span>AppEventsEnum<span class="token punctuation">.</span>documentToolbarOptionChange<span class="token punctuation">,</span> e<span class="token punctuation">.</span>value<span class="token punctuation">.</span>justify<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>On the other hand, the view model of the current page listens to these events and triggers the relevant actions.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token comment">// DocumentVM ctor</span>
+<span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token operator">...</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span>AppEventsEnum<span class="token punctuation">.</span>documentToolbarOptionChange<span class="token punctuation">,</span> <span class="token punctuation">(</span>justify<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>justify <span class="token operator">=</span> justify<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<h2>And voilà!</h2>
+<p>This architecture, although very simple, is already fully functional. It can be reworked to handle more complex cases, and nested nested toolbars are even possible.</p>
+<p>Thanks for checking by!</p>
 </article>
         </div>
     
