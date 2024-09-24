@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <base href="../..">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Some code crumbs dropped along my coding <path/>">
+        <meta name="keywords" content="Eleventy, Web Components, JS, HTML, JavaScript, SVG">
+        <meta name="generator" content="Eleventy">
+        <meta name="author" content="Pierre Plaissy">
+
+        <meta property="og:title" content="Consuming API data">
+        <meta property="og:type" content="article">
+        <meta property="og:URL" content="https://code-crumbs.pplaissy.fr/posts/consuming-api-data/">
+        <meta property="og:image" content="https://code-crumbs.pplaissy.fr/assets/img/consuming-api-data/thumbnail.png">
+        <meta property="og:description" content="Don't want to write an adapter for each model class? Here is a way to simplify the Model-Adapter Pattern!">
+
+        <title>Code crumbs</title>
+        <link rel="icon" href="assets/img/favicon.ico">
+        <link rel="stylesheet" href="assets/css/main.css">
+        <link rel="stylesheet" href="assets/css/posts.css">
+    </head>
+    <body>
+        <nav class="header">
+  <div class="avatar">
+    <img src="assets/img/me.png" alt="me" class="profile-img mr">
+    <!-- <span class="copy" @html="'&copy; ' + currentYear() + ' P. Plaissy'"></span> -->
+    <!-- <span>P. Plaissy</span> -->
+  </div>
+  <div class="title">
+    <div class="main">
+      <a href="#" class="nav-item mr">code crumbs</a>
+      <a href="https://www.linkedin.com/in/pierreplaissy/" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer" class="linkedin">
+    <img src="assets/img/linkedin.svg" alt="LinkedIn" width="24" height="24" class="mb-1">
+</a>
+
+      <a href="https://pplaissy.fr/" aria-label="Petit cabinet de curiosités" target="_blank" rel="noopener noreferrer" class="linkedin">
+    <img src="assets/img/compas.png" alt="Petit cabinet de curiosités" width="40" height="40" class="mb-1">
+</a>
+    </div>
+    <!-- <div class="epigraph">
+      <span>Some code crumbs dropped along my coding &lt;path&#47;&gt;</span>
+    </div> -->
+  </div>
+</nav>
+<link rel="stylesheet" href="assets/css/header.css">
+
+        <div class="main-container">
+            <h1>Consuming API data</h1>
+<article><h2>Starting point</h2>
+<p>Like everyone who has to deal with API data consumption, I've been wondering what the best solution is for switching from JSON to a strongly typed model and taking full advantage of TypeScript's static typing.</p>
+<p>I quickly came across the Model-Adapter pattern and was initially inspired by the article by <a href="https://florimond.dev/en/">Florimond Manca</a>, “Consuming APIs in Angular: The Model-Adapter Pattern”.</p>
+<p>I've transcribed some of the code examples he proposes here, but I strongly recommend that you refer to his <a href="https://florimond.dev/en/posts/2018/09/consuming-apis-in-angular-the-model-adapter-pattern">article</a> for an overview.</p>
+<p>An Adapter is a class that implements a simple method whose function is to instantiate an object of type T from <strong>JSON</strong> data received from the API.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">interface</span> <span class="token class-name">Adapter<span class="token operator">&lt;</span><span class="token constant">T</span><span class="token operator">&gt;</span></span> <span class="token punctuation">{</span>
+  <span class="token function">adapt</span><span class="token punctuation">(</span>item<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token constant">T</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>In this example, we imagine a database containing a “<strong>courses</strong>” table with some columns [<strong>id, code, name, created</strong>].</p>
+<p>When the API is queried by the front end, it interrogates the database and returns a response, in this case in <strong>JSON</strong> format, for example:</p>
+<pre class="language-json"><code class="language-json"><span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+        <span class="token property">"id"</span><span class="token operator">:</span> <span class="token number">587</span><span class="token punctuation">,</span>
+        <span class="token property">"code"</span><span class="token operator">:</span> <span class="token string">"CX20240923"</span><span class="token punctuation">,</span>
+        <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Consuming API data"</span><span class="token punctuation">,</span>
+        <span class="token property">"created"</span><span class="token operator">:</span> <span class="token string">"2024-09-23"</span>
+	<span class="token punctuation">}</span>
+<span class="token punctuation">]</span></code></pre>
+<p>Front end side, we want to be able to use a <strong>Course</strong> object. We therefore declare a <strong>Course</strong> class and a <strong>CourseAdapter</strong> that implements the <strong>adapt</strong> method, which instantiates a <strong>Course</strong> object using the values received from the API.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token punctuation">{</span> Injectable <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@angular/core"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Adapter <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"./adapter"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">Course</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span>
+    <span class="token keyword">public</span> id<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">,</span>
+    <span class="token keyword">public</span> code<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span>
+    <span class="token keyword">public</span> name<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">,</span>
+    <span class="token keyword">public</span> created<span class="token operator">:</span> Date
+  <span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token decorator"><span class="token at operator">@</span><span class="token function">Injectable</span></span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  providedIn<span class="token operator">:</span> <span class="token string">"root"</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">CourseAdapter</span> <span class="token keyword">implements</span> <span class="token class-name">Adapter<span class="token operator">&lt;</span>Course<span class="token operator">&gt;</span></span> <span class="token punctuation">{</span>
+  <span class="token function">adapt</span><span class="token punctuation">(</span>item<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> Course <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Course</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>id<span class="token punctuation">,</span> item<span class="token punctuation">.</span>code<span class="token punctuation">,</span> item<span class="token punctuation">.</span>name<span class="token punctuation">,</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>created<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>From here, we can set up a service (in this case under <strong>Angular</strong>) into which the <strong>CourseAdapter</strong> will be injected.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">CourseService</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token keyword">private</span> http<span class="token operator">:</span> HttpClient<span class="token punctuation">,</span> <span class="token keyword">private</span> adapter<span class="token operator">:</span> CourseAdapter<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+  <span class="token function">list</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> Observable<span class="token operator">&lt;</span>Course<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>http<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">"some api url"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">pipe</span><span class="token punctuation">(</span>
+      <span class="token comment">// Adapt each item in the raw data array</span>
+      <span class="token function">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span>data<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> data<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">this</span><span class="token punctuation">.</span>adapter<span class="token punctuation">.</span><span class="token function">adapt</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p><strong>Florimond</strong> deliberately dodges a number of problems that will quickly arise when we want to move on to real-life implementation. That's to be expected, it's impossible to describe every case, otherwise this is no longer an article, it's a course 😁.</p>
+<p>Nevertheless, it's an excellent starting point.</p>
+<h2>One step further</h2>
+<p>That said, as soon as you have to manage a large number of classes to carry data from the API, it quickly becomes cumbersome to implement so many adapters and services. We'd like to be able to instantiate a class directly from <strong>JSON</strong> in a purely generic way.</p>
+<p>Angular's <strong>HttpClient</strong> can retrieve data by specifying a type (here MyClass):</p>
+<pre class="language-typescript"><code class="language-typescript">httpClient<span class="token punctuation">.</span><span class="token generic-function"><span class="token function">get</span><span class="token generic class-name"><span class="token operator">&lt;</span>MyClass<span class="token operator">&gt;</span></span></span><span class="token punctuation">(</span>url<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>But here the result value is just an <strong>Object as MyClass</strong>, not an instance of MyClass. This is the same as writing :</p>
+<pre class="language-typescript"><code class="language-typescript">httpClient
+  <span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>url<span class="token punctuation">)</span>
+  <span class="token punctuation">.</span><span class="token function">pipe</span><span class="token punctuation">(</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span>data<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> data <span class="token keyword">as</span> MyClass<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>The TypeScript documentation on <a href="https://www.typescriptlang.org/docs/handbook/2/generics.html#using-class-types-in-generics">generic types</a> gives directions for implementing a “universal adapter”.</p>
+<p>Let's take a look at an example.</p>
+<p>Let's say the API provides me with a <strong>JSON</strong> describing a <strong>Token</strong> object, and I've declared a <strong>Token</strong> class to carry this object. Unlike the <strong>Florimond</strong> example, here the class doesn't have a constructor, but we could as well use one, depending on what we want to do next, so you'll have to do your own testing.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">Token</span> <span class="token punctuation">{</span>
+    id<span class="token operator">:</span> <span class="token builtin">string</span> <span class="token operator">=</span> <span class="token string">""</span><span class="token punctuation">;</span>
+    ip<span class="token operator">:</span> <span class="token builtin">string</span> <span class="token operator">=</span> <span class="token string">""</span><span class="token punctuation">;</span>
+    creation<span class="token operator">:</span> Date <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    lastAccess<span class="token operator">:</span> Date <span class="token operator">|</span> <span class="token keyword">null</span> <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Next, simply write a generic method that takes a class model and the <strong>JSON</strong> dataset as arguments. This will parse the class model's existing key/value pairs (which is why each property must be initialized with a default value), search for this key in the <strong>JSON</strong> dataset and, if found, assign its value.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token generic-function"><span class="token function">createInstance</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token constant">A</span><span class="token operator">&gt;</span></span></span><span class="token punctuation">(</span>c<span class="token operator">:</span> <span class="token keyword">new</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token constant">A</span><span class="token punctuation">,</span> data<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token constant">A</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">c</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// get model object properties key/value pairs</span>
+    <span class="token keyword">const</span> kvps <span class="token operator">=</span> Object<span class="token punctuation">.</span><span class="token function">entries</span><span class="token punctuation">(</span>result <span class="token keyword">as</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> index <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> index <span class="token operator">&lt;</span> kvps<span class="token punctuation">.</span>length<span class="token punctuation">;</span> index<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> key <span class="token operator">=</span> kvps<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>data<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token punctuation">(</span>result <span class="token keyword">as</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> data<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token comment">// not nullable properties are required</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>data<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">!==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	            <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Key not found in api data : </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>key<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>In passing, we see that it is possible to check that the data supplied by the API corresponds to that expected by the front end. If a property is nullable, it has “null” as its default value and is therefore optional. It corresponds to a nullable column in the database, a non-mandatory field. So it's not necessarily abnormal not to receive it from the API.</p>
+<p>This is a very simple and reasonably robust method for parsing data received from the API. Its use is elementary, since the function returns an instance of <strong>any class passed as an argument</strong>.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">const</span> tokenItem <span class="token operator">=</span> <span class="token function">createInstance</span><span class="token punctuation">(</span>Token<span class="token punctuation">,</span> apiData<span class="token punctuation">)</span><span class="token punctuation">;</span></code></pre>
+<p>So few code to write, even if you have dozens of classes to manage.</p>
+<h2>The next level</h2>
+<p>One case that has not been taken into account is where the property is indeed of the standard type, but consists of a <strong>array</strong>, as when retrieving the result of a database view.</p>
+<p>Even more complex, until now we've only considered the case of properties corresponding to <strong>standard javascript types</strong> (string, number, boolean, date). This is what you'll be dealing with most often when retrieving data from a database. But the API can also provide <strong>specific types</strong>.</p>
+<p>If I have an <strong>Point</strong> type:</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">Point</span> <span class="token punctuation">{</span>
+    x<span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    y<span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>I might want to retrieve a <strong>Segment</strong> object via the :</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">Segment</span> <span class="token punctuation">{</span>
+    uuid<span class="token operator">:</span> <span class="token builtin">string</span> <span class="token operator">=</span> <span class="token string">""</span><span class="token punctuation">;</span>
+	startPoint<span class="token operator">:</span> Point <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Point</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    endPoint<span class="token operator">:</span> Point <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Point</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>JSON arrives as:</p>
+<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+    <span class="token property">"uuid"</span><span class="token operator">:</span> <span class="token string">"ht78f55"</span><span class="token punctuation">,</span>
+    <span class="token property">"startPoint"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"x"</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+        <span class="token property">"y"</span><span class="token operator">:</span> <span class="token number">0</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">"endPoint"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"x"</span><span class="token operator">:</span> <span class="token number">42</span><span class="token punctuation">,</span>
+        <span class="token property">"y"</span><span class="token operator">:</span> <span class="token number">42</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p><strong>createInstance</strong> cannot instantiate a property of type <strong>Point</strong> by <code>(result as any)[key] = data[key];</code>. We'll have to figure out how to handle this specific type.</p>
+<p>And of course, to make matters worse, we could be dealing with an array of <strong>Point</strong> 😁.</p>
+<p>And it won't be long before we're dealing with specific nested types.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">Reticle</span> <span class="token punctuation">{</span>
+	horizontalSegment<span class="token operator">:</span> Segment <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Segment</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    verticalSegment<span class="token operator">:</span> Segment <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Segment</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+<p>With a JSON as:</p>
+<pre class="language-json"><code class="language-json"><span class="token punctuation">{</span>
+    <span class="token property">"horizontalSegment"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    	<span class="token property">"uuid"</span><span class="token operator">:</span> <span class="token string">"ht78f55"</span><span class="token punctuation">,</span>
+        <span class="token property">"startPoint"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token property">"x"</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            <span class="token property">"y"</span><span class="token operator">:</span> <span class="token number">0</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token property">"endPoint"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token property">"x"</span><span class="token operator">:</span> <span class="token number">42</span><span class="token punctuation">,</span>
+            <span class="token property">"y"</span><span class="token operator">:</span> <span class="token number">42</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">"verticalSegment"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    	<span class="token property">"uuid"</span><span class="token operator">:</span> <span class="token string">"815ddew"</span><span class="token punctuation">,</span>
+        <span class="token property">"startPoint"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token property">"x"</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            <span class="token property">"y"</span><span class="token operator">:</span> <span class="token number">0</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token property">"endPoint"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token property">"x"</span><span class="token operator">:</span> <span class="token number">42</span><span class="token punctuation">,</span>
+            <span class="token property">"y"</span><span class="token operator">:</span> <span class="token number">42</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>A Cliffhanger ending for a potential upcoming article 👉 Thanks for checking by &amp;&amp; stay tuned !</p>
+</article>
+        </div>
+    
+</body>
+</html>
