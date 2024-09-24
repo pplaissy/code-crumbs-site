@@ -59,3 +59,28 @@
 .mr {
     margin-right: 1.5rem;
 }
+
+.github {
+    margin-right: 0.4rem;
+    --tooltip-color: #000000;
+}
+
+.linkedin {
+    margin-right: 0.3rem;
+    --tooltip-color: #0a66c2;
+}
+
+.pcc {
+    --tooltip-color: #a86a23;
+}
+
+*[tooltip]:hover:before {
+    content: attr(tooltip);
+    background-color: var(--tooltip-color);
+    color: #fff;
+    font-size: x-large;
+    position: absolute;
+    border-radius: 5px;
+    top: 0;
+    padding: 0 6px;
+}
