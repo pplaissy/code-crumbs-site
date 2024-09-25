@@ -251,3 +251,7 @@ th {
     text-align: left;
     background-color: #d9d9d9;
 }
+
+.utterances {
+    max-width: 100%;
+}
