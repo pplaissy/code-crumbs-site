@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <base href="../..">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Some code crumbs dropped along my coding <path/>">
+        <meta name="keywords" content="Eleventy, Web Components, JS, HTML, JavaScript, SVG">
+        <meta name="generator" content="Eleventy">
+        <meta name="author" content="Pierre Plaissy">
+
+        <meta property="og:title" content="Documentation viewer template">
+        <meta property="og:type" content="article">
+        <meta property="og:URL" content="https://code-crumbs.pplaissy.fr/posts/doc-viewer-template/">
+        <meta property="og:image" content="https://code-crumbs.pplaissy.fr/assets/img/doc-viewer-template/thumbnail.png">
+        <meta property="og:description" content="In the process of coding a user help application and I realize that's could be as a nice starting point for anyone with a similar need...">
+
+        <title>Code crumbs</title>
+        <link rel="icon" href="assets/img/favicon.ico">
+        <link rel="stylesheet" href="assets/css/main.css">
+        <link rel="stylesheet" href="assets/css/posts.css">
+    </head>
+    <body>
+        <nav class="header">
+  <div class="avatar">
+    <img src="assets/img/me.png" alt="me" class="profile-img mr">
+    <!-- <span class="copy" @html="'&copy; ' + currentYear() + ' P. Plaissy'"></span> -->
+    <!-- <span>P. Plaissy</span> -->
+  </div>
+  <div class="title">
+    <div class="main">
+      <a href="#" class="nav-item mr">code crumbs</a>
+      <a tooltip="Github" href="https://github.com/pplaissy" aria-label="Github" target="_blank" rel="noopener noreferrer" class="github">
+    <img src="assets/img/github.png" alt="Github" width="24" height="24" class="mb-1">
+</a>
+
+      <a tooltip="LinkedIn" href="https://www.linkedin.com/in/pierreplaissy/" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer" class="linkedin">
+    <img src="assets/img/linkedin.svg" alt="LinkedIn" width="24" height="24" class="mb-1">
+</a>
+
+      <a tooltip="Petit Cabinet de Curiosités" href="https://pplaissy.fr/" aria-label="Petit cabinet de curiosités" target="_blank" rel="noopener noreferrer" class="pcc">
+    <img src="assets/img/compas.png" alt="Petit cabinet de curiosités" width="24" height="24" class="mb-1">
+</a>
+    </div>
+    <!-- <div class="epigraph">
+      <span>Some code crumbs dropped along my coding &lt;path&#47;&gt;</span>
+    </div> -->
+  </div>
+</nav>
+<link rel="stylesheet" href="assets/css/header.css">
+
+        <div class="main-container">
+            <h1>Documentation viewer template</h1>
+<article><p>This source can be used as a starter kit to build a documentation application.</p>
+<p>I'm in the process of coding a user help application and I realize that by purging the aspects specific to my environment there remain some general principles that could serve as a starting point for anyone with a similar need.</p>
+<p>That's the purpose of this little repo.</p>
+<h2>UX</h2>
+<p>It's a single page divided vertically into two parts.</p>
+<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">...</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p-splitter</span> 
+        <span class="token attr-name">...</span>
+        <span class="token attr-name">&lt;ng-template</span> <span class="token attr-name">pTemplate</span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">...</span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>router-outlet</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>contents<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>ng-template</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>ng-template</span> <span class="token attr-name">pTemplate</span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">..</span><span class="token punctuation">&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">...</span><span class="token punctuation">&gt;</span></span>
+                    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>router-outlet</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>article<span class="token punctuation">"</span></span><span class="token punctuation">/&gt;</span></span>
+                <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>ng-template</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p-splitter</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span></code></pre>
+<p>A side panel on the right with the tree-structured table of contents.</p>
+<p>The main panel on the left, designed to display the article selected in the table of contents.</p>
+<p>Table of contents data is loaded when the application is started or when the page is refreshed.</p>
+<p>Article content is updated when the url is modified, either by :</p>
+<ul>
+<li>selecting a table of contents entry</li>
+<li>direct entry in the address bar</li>
+<li>clicking in an article on a link to another article</li>
+</ul>
+<p>The selected entry in the table of contents is modified by :</p>
+<ul>
+<li>clicking on a tree node</li>
+<li>redirection from the current article to another article by clicking on a link</li>
+</ul>
+<p>Translated with <a href="http://DeepL.com">DeepL.com</a> (free version)</p>
+<h2>Patterns</h2>
+<p>I would like to draw your attention to two particular patterns used here:</p>
+<ul>
+<li><strong>resolvers</strong> to supply data to components</li>
+<li><strong>auxiliary routes</strong></li>
+</ul>
+<h3>Resolvers</h3>
+<p>A resolver is a service referenced by a route. It can, for example, query an api to retrieve the data required by the component loaded by the route.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token comment">// app.routes.ts resolver binding</span>
+<span class="token comment">// loading TableOfContentsComponent execute ContentResolver</span>
+<span class="token punctuation">{</span>            
+    path<span class="token operator">:</span> <span class="token string">''</span><span class="token punctuation">,</span> 
+    outlet<span class="token operator">:</span> <span class="token string">"contents"</span><span class="token punctuation">,</span>
+    <span class="token function-variable function">loadComponent</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">import</span><span class="token punctuation">(</span><span class="token string">'./pages/table-of-contents/table-of-contents.component'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span>c <span class="token operator">=&gt;</span> c<span class="token punctuation">.</span>TableOfContentsComponent<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    resolve<span class="token operator">:</span> <span class="token punctuation">{</span>
+        docData<span class="token operator">:</span> ContentResolver
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>The resolver for the table of contents queries the api and returns an array of Content, which is the data model for the documentation entries.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token decorator"><span class="token at operator">@</span><span class="token function">Injectable</span></span><span class="token punctuation">(</span><span class="token punctuation">{</span> providedIn<span class="token operator">:</span> <span class="token string">'root'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">ContentResolver</span> <span class="token keyword">implements</span> <span class="token class-name">Resolve<span class="token operator">&lt;</span>Contents<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">&gt;</span></span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token keyword">private</span> api<span class="token operator">:</span> DocApi<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+  <span class="token function">resolve</span><span class="token punctuation">(</span>route<span class="token operator">:</span> ActivatedRouteSnapshot<span class="token punctuation">,</span> state<span class="token operator">:</span> RouterStateSnapshot<span class="token punctuation">)</span><span class="token operator">:</span> Observable<span class="token operator">&lt;</span>Contents<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>api<span class="token punctuation">.</span><span class="token function">getContents$</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>The data supplied by the resolver is retrieved from the component's ngOnInit.</p>
+<pre class="language-typescript"><code class="language-typescript"><span class="token function">ngOnInit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+    <span class="token comment">// docData is provided by ContentResolver declared in app.route</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>activatedRoute<span class="token punctuation">.</span>data<span class="token punctuation">.</span><span class="token function">subscribe</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">{</span> docData <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+        <span class="token operator">...</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ <span class="token punctuation">}</span></code></pre>
+<p>I use two resolvers, one for the table of contents, one for the content of the selected article.</p>
+<p>See <a href="https://angular.dev/api/router/Resolve">here</a> for full documentation.</p>
+<h3>Auxiliary routes</h3>
+<p>Hard to find reliable documentation on the subject. No results on the angular api documentation for a search on “auxiliary”. You have to tinker a bit to find the right syntax for the <code>[routerLink ]</code>😓</p>
+<pre class="language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>a</span> <span class="token attr-name">[routerLink]</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>['/content', { outlets: {article: article.link} }]<span class="token punctuation">"</span></span><span class="token punctuation">&gt;</span></span>See also<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>a</span><span class="token punctuation">&gt;</span></span></code></pre>
+<p>In the address bar, the url has an unusual shape: <code>/content/(article:welcome)</code></p>
+<p>Navigation is divided between <strong>three router-outlets</strong>. The main one, which is the AppComponent template, and the two outlets named in the <a href="#ux">DocComponent</a>.</p>
+<h2>To conclude</h2>
+<p>Of course, it's all very succinct. The mock is far from producing the experience of a real documentation. You need to be able to structure the content and display images.</p>
+<p>Personally, I write articles in markdown and use the lib <a href="https://www.npmjs.com/package/ngx-markdown">ngx-markdown</a> to render them in html. I haven't reproduced this part of the code in this template to keep it simple and avoid multiplying the points of attention. I may write an article on this topic in the near future, with a particular focus on the subtleties of managing internal links and downloading images on the fly.</p>
+<p>You'll find the repo <a href="https://github.com/pplaissy/doc-viewer">here</a>.</p>
+<p>Feel free to test it out and let me know if it has been been a good starting point for your own project.</p>
+</article>
+
+
+            <script src="https://utteranc.es/client.js" repo="pplaissy/code-crumbs-site" issue-term="pathname" theme="github-light" crossorigin="anonymous" async>
+            </script>
+        </div>
+    
+
+</body>
+</html>
