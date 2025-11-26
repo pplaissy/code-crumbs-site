@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <base href="../..">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Some code crumbs dropped along my coding <path/>">
+        <meta name="keywords" content="Eleventy, Web Components, JS, HTML, JavaScript, SVG">
+        <meta name="generator" content="Eleventy">
+        <meta name="author" content="Pierre Plaissy">
+
+        <meta property="og:title" content="Inspecting a dxf file content">
+        <meta property="og:type" content="article">
+        <meta property="og:URL" content="https://code-crumbs.pplaissy.fr/posts/dxf-inspector/">
+        <meta property="og:image" content="https://code-crumbs.pplaissy.fr/assets/img/dxf-inspector/thumbnail.png">
+        <meta property="og:description" content="I initially created this application to validate my DXF parser. It allows you to visualize a DXF file in a structured format (json like).">
+
+        <title>Code crumbs</title>
+        <link rel="icon" href="assets/img/favicon.ico">
+        <link rel="stylesheet" href="assets/css/main.css">
+        <link rel="stylesheet" href="assets/css/posts.css">
+    </head>
+    <body>
+        <nav class="header">
+  <div class="avatar">
+    <img src="assets/img/me.png" alt="me" class="profile-img mr">
+    <!-- <span class="copy" @html="'&copy; ' + currentYear() + ' P. Plaissy'"></span> -->
+    <!-- <span>P. Plaissy</span> -->
+  </div>
+  <div class="title">
+    <div class="main">
+      <a href="#" class="nav-item mr">code crumbs</a>
+      <a tooltip="Github" href="https://github.com/pplaissy" aria-label="Github" target="_blank" rel="noopener noreferrer" class="github">
+    <img src="assets/img/github.png" alt="Github" width="24" height="24" class="mb-1">
+</a>
+
+      <a tooltip="LinkedIn" href="https://www.linkedin.com/in/pierreplaissy/" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer" class="linkedin">
+    <img src="assets/img/linkedin.svg" alt="LinkedIn" width="24" height="24" class="mb-1">
+</a>
+
+      <a tooltip="Petit Cabinet de Curiosités" href="https://pplaissy.fr/" aria-label="Petit cabinet de curiosités" target="_blank" rel="noopener noreferrer" class="pcc">
+    <img src="assets/img/compas.png" alt="Petit cabinet de curiosités" width="24" height="24" class="mb-1">
+</a>
+    </div>
+    <!-- <div class="epigraph">
+      <span>Some code crumbs dropped along my coding &lt;path&#47;&gt;</span>
+    </div> -->
+  </div>
+</nav>
+<link rel="stylesheet" href="assets/css/header.css">
+
+        <div class="main-container">
+            <h1>Inspecting a dxf file content</h1>
+<article><p>I initially created <a href="https://dxf-inspector.pplaissy.fr">this application</a> to validate my DXF parser. It allows you to <strong>view a DXF file in a structured format</strong> (json like).</p>
+<p>If you are looking to <strong>reverse engineer undocumented data</strong> from DXF files, this is undoubtedly a good place to start.</p>
+<p>If you have any questions, suggestions or issues, please contact me on <a href="https://www.linkedin.com/in/pierreplaissy/">LinkedIn</a>.</p>
+<p>For those who are interested, <strong>I plan to release the parser as open source nuget package</strong> as soon as it is stable and I have found the time to clean up the code and document it minimally.</p>
+<p>The advantage of this parser, written in C#, is that it <strong>restores all of the data</strong> in the DXF file, including data that is not documented by <a href="https://help.autodesk.com/view/OARX/2026/ENU/?guid=GUID-235B22E0-A567-4CF6-92D3-38A2306D73F3">Autodesk</a> or that is particularly complex to reconstruct as an object, which, to my knowledge, existing parsers such as netDxf (C#, no longer maintained), ezdxf (Python), dxfjs (JavaScript) do not allow.</p>
+<h3>To (may)be continued</h3>
+<ul>
+<li>Search a value</li>
+<li>Jump between items using handles</li>
+<li>Draw a dependency graph</li>
+</ul>
+</article>
+
+
+            <script src="https://utteranc.es/client.js" repo="pplaissy/code-crumbs-site" issue-term="pathname" theme="github-light" crossorigin="anonymous" async>
+            </script>
+        </div>
+    
+
+</body>
+</html>
